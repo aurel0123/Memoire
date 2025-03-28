@@ -1,8 +1,12 @@
+import Routes from './routes/Routes'
+import ThemeProvider from './context/theme-context'
 function App() {
   return (
-    <div className="">
-      salut tout le monde 
-    </div>
+    <>
+    <ThemeProvider>
+      <Routes />
+    </ThemeProvider>
+    </>
   )
 }
 

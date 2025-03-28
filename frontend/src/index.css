@@ -4,63 +4,62 @@
 
 @custom-variant dark (&:is(.dark *));
 
-
+@layer base {
   :root {
-    --background: hsl(0 0% 100%); /* Couleur de fond blanche */
-    --foreground: hsl(222.2 84% 4.9%); /* Couleur du texte (proche du noir) */
-    --card: hsl(0 0% 100%); /* Couleur de fond de la carte */
-    --card-foreground: hsl(222.2 84% 4.9%); /* Couleur du texte de la carte */
-    --popover: hsl(0 0% 100%); /* Couleur de fond du popover */
-    --popover-foreground: hsl(222.2 84% 4.9%); /* Couleur du texte du popover */
-    --primary: hsl(221.2 83.2% 53.3%); /* Couleur primaire */
-    --primary-foreground: hsl(210 40% 98%); /* Couleur du texte principal */
-    --secondary: hsl(210 40% 96.1%); /* Couleur secondaire */
-    --secondary-foreground: hsl(222.2 47.4% 11.2%); /* Texte secondaire */
-    --muted: hsl(210 40% 96.1%); /* Couleur atténuée */
-    --muted-foreground: hsl(215.4 16.3% 46.9%); /* Texte atténué */
-    --accent: hsl(210 40% 96.1%); /* Couleur accentuée */
-    --accent-foreground: hsl(222.2 47.4% 11.2%); /* Texte accentué */
-    --destructive: hsl(0 84.2% 60.2%); /* Couleur destructrice */
-    --destructive-foreground: hsl(210 40% 98%); /* Texte destructeur */
-    --border: hsl(214.3 31.8% 91.4%); /* Bordure */
-    --input: hsl(214.3 31.8% 91.4%); /* Couleur d'entrée */
-    --ring: hsl(221.2 83.2% 53.3%); /* Couleur du ring */
-    --radius: 0.3rem; /* Rayon des coins */
-    --chart-1: hsl(12 76% 61%); /* Couleur pour le graphique 1 */
-    --chart-2: hsl(173 58% 39%); /* Couleur pour le graphique 2 */
-    --chart-3: hsl(197 37% 24%); /* Couleur pour le graphique 3 */
-    --chart-4: hsl(43 74% 66%); /* Couleur pour le graphique 4 */
-    --chart-5: hsl(27 87% 67%); /* Couleur pour le graphique 5 */
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(222.2, 84%, 4.9%);
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(222.2, 84%, 4.9%);
+    --popover: hsl(0, 0%, 100%);
+    --popover-foreground: hsl(222.2, 84%, 4.9%);
+    --primary: hsl(221.2, 83.2%, 53.3%);
+    --primary-foreground: hsl(210, 40%, 98%);
+    --secondary: hsl(210, 40%, 96.1%);
+    --secondary-foreground: hsl(222.2, 47.4%, 11.2%);
+    --muted: hsl(210, 40%, 96.1%);
+    --muted-foreground: hsl(215.4, 16.3%, 46.9%);
+    --accent: hsl(210, 40%, 96.1%);
+    --accent-foreground: hsl(222.2, 47.4%, 11.2%);
+    --destructive: hsl(0, 84.2%, 60.2%);
+    --destructive-foreground: hsl(210, 40%, 98%);
+    --border: hsl(214.3, 31.8%, 91.4%);
+    --input: hsl(214.3, 31.8%, 91.4%);
+    --ring: hsl(221.2, 83.2%, 53.3%);
+    --radius: 0.3rem;
+    --chart-1: hsl(12, 76%, 61%);
+    --chart-2: hsl(173, 58%, 39%);
+    --chart-3: hsl(197, 37%, 24%);
+    --chart-4: hsl(43, 74%, 66%);
+    --chart-5: hsl(27, 87%, 67%);
   }
 
   .dark {
-    --background: hsl(222.2 84% 4.9%); /* Fond sombre */
-    --foreground: hsl(210 40% 98%); /* Texte clair */
-    --card: hsl(222.2 84% 4.9%); /* Fond de carte sombre */
-    --card-foreground: hsl(210 40% 98%); /* Texte de carte clair */
-    --popover: hsl(222.2 84% 4.9%); /* Fond du popover sombre */
-    --popover-foreground: hsl(210 40% 98%); /* Texte du popover clair */
-    --primary: hsl(217.2 91.2% 59.8%); /* Couleur primaire pour le mode sombre */
-    --primary-foreground: hsl(222.2 47.4% 11.2%); /* Texte primaire sombre */
-    --secondary: hsl(217.2 32.6% 17.5%); /* Couleur secondaire sombre */
-    --secondary-foreground: hsl(210 40% 98%); /* Texte secondaire clair */
-    --muted: hsl(217.2 32.6% 17.5%); /* Couleur atténuée sombre */
-    --muted-foreground: hsl(215 20.2% 65.1%); /* Texte atténué clair */
-    --accent: hsl(217.2 32.6% 17.5%); /* Couleur accent sombre */
-    --accent-foreground: hsl(210 40% 98%); /* Texte accent sombre */
-    --destructive: hsl(0 62.8% 30.6%); /* Couleur destructrice sombre */
-    --destructive-foreground: hsl(210 40% 98%); /* Texte destructeur clair */
-    --border: hsl(217.2 32.6% 17.5%); /* Bordure sombre */
-    --input: hsl(217.2 32.6% 17.5%); /* Couleur d'entrée sombre */
-    --ring: hsl(224.3 76.3% 48%); /* Couleur du ring sombre */
-    --chart-1: hsl(220 70% 50%); /* Graphique sombre 1 */
-    --chart-2: hsl(160 60% 45%); /* Graphique sombre 2 */
-    --chart-3: hsl(30 80% 55%); /* Graphique sombre 3 */
-    --chart-4: hsl(280 65% 60%); /* Graphique sombre 4 */
-    --chart-5: hsl(340 75% 55%); /* Graphique sombre 5 */
+    --background: hsl(222.2, 84%, 4.9%);
+    --foreground: hsl(210, 40%, 98%);
+    --card: hsl(222.2, 84%, 4.9%);
+    --card-foreground: hsl(210, 40%, 98%);
+    --popover: hsl(222.2, 84%, 4.9%);
+    --popover-foreground: hsl(210, 40%, 98%);
+    --primary: hsl(217.2, 91.2%, 59.8%);
+    --primary-foreground: hsl(222.2, 47.4%, 11.2%);
+    --secondary: hsl(217.2, 32.6%, 17.5%);
+    --secondary-foreground: hsl(210, 40%, 98%);
+    --muted: hsl(217.2, 32.6%, 17.5%);
+    --muted-foreground: hsl(215, 20.2%, 65.1%);
+    --accent: hsl(217.2, 32.6%, 17.5%);
+    --accent-foreground: hsl(210, 40%, 98%);
+    --destructive: hsl(0, 62.8%, 30.6%);
+    --destructive-foreground: hsl(210, 40%, 98%);
+    --border: hsl(217.2, 32.6%, 17.5%);
+    --input: hsl(217.2, 32.6%, 17.5%);
+    --ring: hsl(224.3, 76.3%, 48%);
+    --chart-1: hsl(220, 70%, 50%);
+    --chart-2: hsl(160, 60%, 45%);
+    --chart-3: hsl(30, 80%, 55%);
+    --chart-4: hsl(280, 65%, 60%);
+    --chart-5: hsl(340, 75%, 55%);
   }
-
-
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -108,4 +107,40 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}/* Mode clair */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 10px;
 }

@@ -32,3 +32,12 @@ class CustomUserAdmin(BaseUserAdmin):
 
 #admin.site.unregister(User)
 admin.site.register(CustomUser, CustomUserAdmin)
+admin.site.register(Enseignant)
+admin.site.register(Filiere)
+admin.site.register(Etudiant)
+admin.site.register(Groupe)
+admin.site.register(Monome)
+admin.site.register(Binome)
+admin.site.register(RoleJury)
+admin.site.register(Soutenance)
+admin.site.register(ProcesVerbal)
