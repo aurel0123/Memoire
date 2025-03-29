@@ -125,7 +125,6 @@ export default function GestBinome() {
         fetchFiliere() ; 
         fetchBinomes() ; 
     } , [filiereId])
-    console.log(newBinome)
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -162,14 +161,16 @@ export default function GestBinome() {
             }
         }
     };
+    console.log(newBinome)
+    console.log(newBinome.etudiants_matricules.length)
     const handleUpdate = async (e) => {
         e.preventDefault();
         
-        if (!newBinome.theme || !newBinome.etudiants_matricules || newBinome.etudiants_matricules.length < 2) {
+        if (!newBinome.theme || !newBinome.etudiants_matricules ) {
             toast.error("Erreur", { description: "Veuillez remplir tous les champs" });
             return;
         }
-        console.log(newBinome)
+        
         try {
             const res = await axios.put(`http://127.0.0.1:8000/api/binomes/${binomeToUpdate}/`, newBinome);
             if (res.status === 200) {
@@ -195,6 +196,7 @@ export default function GestBinome() {
             }
         }
     };
+    
     const handleDelete = async () => {
         try {
             const res = await axios.delete(`http://127.0.0.1:8000/api/binomes/${binomeToDelete}/`);
@@ -541,7 +543,7 @@ export default function GestBinome() {
                                         value={newBinome.etudiants_matricules?.[0] || ""}
                                         onValueChange={(value) => {
                                             const newStudents = [...newBinome.etudiants_matricules];
-                                            newStudents[0] = value;
+                                            newStudents[0] = value === "aucun" ? "" : value; // Gestion de "Aucun"
                                             setNewBinome({ ...newBinome, etudiants_matricules: newStudents });
                                         }}
                                     >
@@ -549,6 +551,8 @@ export default function GestBinome() {
                                             <SelectValue placeholder="Sélectionner un étudiant" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            {/* Option "Aucun" */}
+                                            <SelectItem value="aucun">Aucun</SelectItem>
                                             {etudiants.map((etudiant) => (
                                                 <SelectItem key={etudiant.matricule} value={etudiant.matricule}>
                                                     {etudiant.nom} {etudiant.prenom}
@@ -565,7 +569,7 @@ export default function GestBinome() {
                                         value={newBinome.etudiants_matricules?.[1] || ""}
                                         onValueChange={(value) => {
                                             const newStudents = [...newBinome.etudiants_matricules];
-                                            newStudents[1] = value;
+                                            newStudents[1] = value === "aucun" ? "" : value; // Gestion de "Aucun"
                                             setNewBinome({ ...newBinome, etudiants_matricules: newStudents });
                                         }}
                                     >
@@ -573,6 +577,10 @@ export default function GestBinome() {
                                             <SelectValue placeholder="Sélectionner un étudiant" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            {/* Option "Aucun" */}
+                                            <SelectItem value="aucun">Aucun</SelectItem>
+
+                                            {/* Liste des étudiants */}
                                             {etudiants.map((etudiant) => (
                                                 <SelectItem key={etudiant.matricule} value={etudiant.matricule}>
                                                     {etudiant.nom} {etudiant.prenom}

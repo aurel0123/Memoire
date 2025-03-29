@@ -119,7 +119,8 @@ class BinomeViewSet(viewsets.ModelViewSet):
         theme = request.data.get("theme", instance.theme)
         programmation = request.data.get("programmation", instance.programmation)
         #Verifier si au moin un etudiant a été fournis
-        if not etudiants_matricules : 
+        print(etudiants_matricules)
+        if not etudiants_matricules: 
             return Response(
                 {"error" : "Un binôme doit être au moin composé de au moin un etudiant"}, 
                 status = status.HTTP_400_BAD_REQUEST
@@ -145,8 +146,37 @@ class BinomeViewSet(viewsets.ModelViewSet):
                     {"error": f"Un binôme avec ces deux étudiants existe déjà (Binôme #{binome.id})."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        # Vérification des doublons de thème (en excluant l'instance actuelle)
+        if Binome.objects.exclude(id=instance.id).filter(theme=theme).exists():
+            return Response(
+                {"error": f"Un binôme avec le thème '{theme}' existe déjà."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
+        # Vérification des étudiants déjà associés à d'autres binômes
+        errors = {}
+        for etudiant in etudiants:
+        # On vérifie si l'étudiant est dans d'autres binômes que celui qu'on modifie
+            if Binome.objects.filter(etudiants=etudiant).exclude(id=instance.id).exists():
+                errors[str(etudiant.matricule)] = f"L'étudiant {etudiant.nom} {etudiant.prenom} est déjà associé à un autre binôme."
 
+        if errors:
+            return Response(
+                {'status': 'error', 'code': 'STUDENT_ALREADY_ASSIGNED', 'details': errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Mise à jour du binôme si aucune erreur
+        try:
+            instance.maitre_memoire_id = maitre_memoire
+            instance.theme = theme
+            instance.programmation = programmation
+            instance.save()
+            instance.etudiants.set(etudiants)  # Mettre à jour la relation many-to-many
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 class MonomeViewSet(viewsets.ModelViewSet):
     queryset = Monome.objects.all()
     serializer_class = MonomeSerializer

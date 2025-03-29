@@ -245,8 +245,8 @@ class Binome(models.Model):
         etudiants_ids = [e.matricule for e in etudiants]
         
         # Vérification du nombre d'étudiants
-        if len(etudiants) != 2:
-            raise ValidationError(_("Un binôme doit être composé d'exactement deux étudiants."))
+        if len(etudiants) <1 or len(etudiants) > 2:
+            raise ValidationError(_("Un binôme doit être composé de au moin un étudiants."))
         
         # Vérification des étudiants différents
         if len(etudiants_ids) != len(set(etudiants_ids)):
