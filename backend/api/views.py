@@ -52,10 +52,10 @@ class BinomeViewSet(viewsets.ModelViewSet):
         theme = request.data.get("theme")
         programmation = request.data.get("programmation")
 
-        # Vérification que les deux étudiants sont bien fournis
-        if len(etudiants_matricules) != 2:
+        # Vérification que au moin un etudiant est bien fournis
+        if not etudiants_matricules :
             return Response(
-                {"error": "Un binôme doit être composé de deux étudiants."},
+                {"error": "Un binôme doit être composé de au moin un étudiants."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -63,7 +63,7 @@ class BinomeViewSet(viewsets.ModelViewSet):
         etudiants = list(Etudiant.objects.filter(matricule__in=etudiants_matricules))
 
         # Vérification que les deux étudiants existent bien
-        if len(etudiants) != 2:
+        if len(etudiants) < 1:
             return Response(
                 {"error": "Certains étudiants fournis ne sont pas trouvés."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -110,6 +110,42 @@ class BinomeViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    def update (self, request , *args , **kwargs) :
+
+        instance = self.get_object()
+        etudiants_matricules = request.data.get("etudiants_matricules", [])
+        maitre_memoire = request.data.get("maitre_memoire", instance.maitre_memoire_id)
+        theme = request.data.get("theme", instance.theme)
+        programmation = request.data.get("programmation", instance.programmation)
+        #Verifier si au moin un etudiant a été fournis
+        if not etudiants_matricules : 
+            return Response(
+                {"error" : "Un binôme doit être au moin composé de au moin un etudiant"}, 
+                status = status.HTTP_400_BAD_REQUEST
+            )
+        # Récupération des étudiants à partir de leur matricule
+        etudiants = list(Etudiant.objects.filter(matricule__in=etudiants_matricules))
+
+        # Vérification que les deux étudiants existent bien
+        if len(etudiants) < 1:
+            return Response(
+                {"error": "Certains étudiants fournis ne sont pas trouvés."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        etudiants_ids = [e.matricule for e in etudiants]
+        
+        binomes_existants = Binome.objects.exclude(id=instance.id).annotate(
+        etudiant_count=Count("etudiants")
+        ).filter(etudiant_count=2, etudiants__in=etudiants)
+
+        for binome in binomes_existants:
+            if set(binome.etudiants.values_list("matricule", flat=True)) == set(etudiants_ids):
+                return Response(
+                    {"error": f"Un binôme avec ces deux étudiants existe déjà (Binôme #{binome.id})."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
 
 class MonomeViewSet(viewsets.ModelViewSet):
     queryset = Monome.objects.all()

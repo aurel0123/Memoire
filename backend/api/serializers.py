@@ -54,3 +54,16 @@ class BinomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Binome
         fields = ['id', 'etudiants', 'etudiants_matricules', 'maitre_memoire', 'theme', 'programmation']
+        
+    def update(self, instance, validated_data):
+        etudiants_matricules = validated_data.pop('etudiants_matricules', None)
+        
+        # Mettre à jour les autres champs
+        instance = super().update(instance, validated_data)
+        
+        # Gestion spécifique des étudiants
+        if etudiants_matricules:
+            etudiants = Etudiant.objects.filter(matricule__in=etudiants_matricules)
+            instance.etudiants.set(etudiants)
+        
+        return instance
