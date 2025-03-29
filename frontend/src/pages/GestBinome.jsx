@@ -2,10 +2,10 @@ import SearchInfo from '@/components/SearchInfo'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { SheetContent, SheetHeader, SheetTrigger, Sheet, SheetTitle ,SheetFooter, SheetClose } from '@/components/ui/sheet'
-import { TableBody, TableCell, TableHead, TableHeader, TableRow, Table } from '@/components/ui/table'
+import { TableBody, TableCell, TableHead, TableHeader, TableRow, Table, TableFooter } from '@/components/ui/table'
 import { Ellipsis, Users } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate , useParams } from 'react-router'
 import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle,} from "@/components/ui/alert-dialog"
 import { buttonVariants } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -14,15 +14,17 @@ import axios from 'axios'
 import { Input } from '@/components/ui/input'
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
-
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious ,  PaginationEllipsis, } from '@/components/ui/pagination';
 
 export default function GestBinome() {
+    const { filiereId } = useParams();
     const [isOpen, setIsOpen] = useState(false);
     const [isOpenUpdateForm, setIsOpenUpdateForm] = useState(false) // État pour gérer l'ouverture du formulaire de mise à jour
     const [binomeToDelete , setBinomeToDelete] = useState(null)
     const [isDeleteDialogOpen,setIsDeleteDialogOpen] = useState(false)
     const [etudiants, setEtudiants] = useState([]);
     const [enseignants , setEnseignants] = useState([])
+    const [binomeToUpdate, setBinomeToUpdate] = useState(null);
     const [binomes, setBinomes] = useState([]);
     const [filieres, setFilieres] = useState([])
     const [newBinome , setNewBinome] = useState({
@@ -69,7 +71,11 @@ export default function GestBinome() {
     const fetchEtudiants = async ()=> {
         try{
             const res = await axios.get('http://127.0.0.1:8000/api/etudiants/')
-            if(res.statusText === "OK") setEtudiants(res.data) ; 
+            
+            const filteredEtudiants = res.data.filter(
+                (etudiant) => etudiant.filiere === parseInt(filiereId)
+              );
+            setEtudiants(filteredEtudiants)
         }catch(error){
             console.error(error)
             toast.error("Erreur", {
@@ -87,21 +93,27 @@ export default function GestBinome() {
             });
         }
     }
-    const fetchFiliere= async () => {
-        try {
-            const res = await axios.get('http://127.0.0.1:8000/api/filieres/')
-            if (res.status == 200) setFilieres(res.data)
-        } catch (error) {
-            console.error(error)
-            toast.error ("Erreur" , {
-                description : `Impossible de charger les filière : ${error.message}` 
-            })
-        }
-    }
+     // Récupérer la filière
+    const fetchFiliere = async () => {
+       try {
+         const response = await fetch(`http://127.0.0.1:8000/api/filieres/${filiereId}/`);
+         if (!response.ok) {
+           throw new Error(`Erreur HTTP: ${response.status}`);
+         }
+         const data = await response.json();
+         
+         setFilieres(data);
+       } catch (err) {
+         toast.error("Erreur", {
+           description: `Impossible de charger la filière: ${err.message}`,
+         });
+       }
+    };
+   
      /* Rénitialiser le formulaire d'ajout */
     const resetFormadd= () => {
         setNewBinome({
-            etudiants_matricules : [], 
+            etudiants_matricules : ["",""], 
             maitre_memoire : "", 
             programmation : "", 
             theme : ""
@@ -112,7 +124,7 @@ export default function GestBinome() {
         fetchEnseignants() ; 
         fetchFiliere() ; 
         fetchBinomes() ; 
-    } , [])
+    } , [filiereId])
     console.log(newBinome)
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -126,7 +138,7 @@ export default function GestBinome() {
             const res = await axios.post("http://127.0.0.1:8000/api/binomes/", newBinome);
             if (res.status === 201) {
                 toast.success("Binôme ajouté avec succès");
-                resetFormadd ()
+                resetFormadd () ; 
                 setIsOpen(false)
                 fetchBinomes(); 
                 //setIsOpenUpdateForm(false); 
@@ -150,6 +162,39 @@ export default function GestBinome() {
             }
         }
     };
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        
+        if (!newBinome.theme || !newBinome.etudiants_matricules || newBinome.etudiants_matricules.length < 2) {
+            toast.error("Erreur", { description: "Veuillez remplir tous les champs" });
+            return;
+        }
+        console.log(newBinome)
+        try {
+            const res = await axios.put(`http://127.0.0.1:8000/api/binomes/${binomeToUpdate}/`, newBinome);
+            if (res.status === 200) {
+                toast.success("Binôme modifié avec succès");
+                resetFormadd() ; 
+                setIsOpenUpdateForm(false);
+                fetchBinomes(); // Rafraîchir la liste
+            }
+        } catch (error) {
+            console.error(error);
+            if (error.response?.data?.code?.includes('STUDENT_ALREADY_ASSIGNED')) {
+                const errorDetails = error.response.data.details;
+                const firstErrorKey = Object.keys(errorDetails)[0];
+                const errorMessage = errorDetails[firstErrorKey];
+                
+                toast.error("Erreur d'assignation", {
+                    description: errorMessage
+                });
+            } else {
+                toast.error("Erreur inattendue", {
+                    description: error.response?.data?.message || "Une erreur est survenue"
+                });
+            }
+        }
+    };
     const handleDelete = async () => {
         try {
             const res = await axios.delete(`http://127.0.0.1:8000/api/binomes/${binomeToDelete}/`);
@@ -166,124 +211,7 @@ export default function GestBinome() {
         }
     };
     
- 
-    /* Formulaire de Modification */
-    const UpdateForm = () => (
-        <Sheet open={isOpenUpdateForm} onOpenChange={() => setIsOpenUpdateForm(!isOpenUpdateForm)}>
-            <SheetContent>
-                <SheetHeader cclassName="border-b bg-muted">
-                    <SheetTitle className="text-xl">Modification du binôme</SheetTitle>
-                </SheetHeader>
-                <form action="">
-                    <div className="grid gap-6 p-4">
-                        <div className="grid items-center gap-3">
-                            <Label htmlFor="Etudiant 1" className="text-right">
-                                Etudiant 1
-                            </Label>
-                            <Select onValueChange={(value) => handleSelectChange("etudiants_matricules", [value, newBinome.etudiants_matricules?.[1]])}>
-                                <SelectTrigger className="col-span-3 w-full">
-                                    <SelectValue placeholder="Selectionner un etudiant" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60 overflow-y-auto">
-                                    {
-                                        etudiants.map((etudiant) => (
-                                            <SelectItem key={etudiant.matricule} value={etudiant.matricule}>
-                                                {etudiant.nom} {etudiant.prenom}
-                                            </SelectItem>
-                                        ))
-                                    }
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid items-center gap-3">
-                            <Label htmlFor="Etudiant 2" className="text-right">
-                                Etudiant 2
-                            </Label>
-                            <Select onValueChange={(value) => handleSelectChange("etudiants_matricules", [newBinome.etudiants_matricules?.[0], value])}>
-                                <SelectTrigger className="col-span-3 w-full">
-                                    <SelectValue placeholder="Selectionner un etudiant" />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60 overflow-y-auto">
-                                    {
-                                        etudiants.map((etudiant) => (
-                                            <SelectItem key={etudiant.matricule} value={etudiant.matricule}>
-                                                {etudiant.nom} {etudiant.prenom}
-                                            </SelectItem>
-                                        ))
-                                    }
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid items-center gap-3">
-                            <Label htmlFor="maitre memoire" className="text-right">
-                                Maitre memoire
-                            </Label>
-                            <Select
-                                value={newBinome.maitre_memoire?.toString() || ""} // Conversion explicite en string
-                                onValueChange={(value) => {
-                                    setNewBinome({
-                                        ...newBinome,
-                                        maitre_memoire: Number(value) // Conversion en number si nécessaire pour l'API
-                                    });
-                                }}
-                            >
-                                <SelectTrigger className="col-span-3 w-full">
-                                    <SelectValue placeholder="Sélectionner un maître mémoire">
-                                        {/* Affichage dynamique du nom de l'enseignant sélectionné */}
-                                        {enseignants.find(e => e.id === newBinome.maitre_memoire)?.nom + " " + enseignants.find(e => e.id === newBinome.maitre_memoire)?.prenom || ""}
-                                    </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {enseignants.map((enseignant) => (
-                                        <SelectItem
-                                            key={enseignant.id}
-                                            value={enseignant.id.toString()} // Conversion forcée en string
-                                        >
-                                            {enseignant.nom} {enseignant.prenom}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid items-center gap-3">
-                            <Label htmlFor="theme" className="text-right">
-                                Thème du binôme
-                            </Label>
-                            <Input id="theme" className="col-span-3" placeholder="Enter le thème du binôme"
-                                value={newBinome.theme || ""}
-                                name="theme"
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div className="grid items-center gap-3">
-                            <Label htmlFor="programmation" className="text-right">
-                                Programmation du binôme
-                            </Label>
-                            <Select defaultValue="est programmé" onValueChange={(value) => handleSelectChange('programmation', value)}>
-                                <SelectTrigger className="col-span-3 w-full">
-                                    <SelectValue placeholder="Selectionner une option" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="est programmé">Est programmé</SelectItem>
-                                    <SelectItem value="non programmé">Non programmé</SelectItem>
-                                    <SelectItem value="refus">Refus</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
 
-                    <SheetFooter >
-                        <div className='flex gap-2 w-fit'>
-                            <Button type="submit" className="w-full">Modifier</Button>
-                            <SheetClose asChild>
-                                <Button className="w-full" variant="destructive">Fermer</Button>
-                            </SheetClose>
-                        </div>
-                    </SheetFooter>
-                </form>
-            </SheetContent>
-        </Sheet>
-    )
 
     const Deletebinome = ()=> (
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -310,7 +238,33 @@ export default function GestBinome() {
         setBinomeToDelete(id);
         setIsDeleteDialogOpen(true);
     }
-    console.log(newBinome)
+     // Ajout des états pour la pagination
+     const [currentPage, setCurrentPage] = useState(1);
+     const itemsPerPage = 10;
+ 
+     // Calcul des données paginées
+     const indexOfLastItem = currentPage * itemsPerPage;
+     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+     const currentBinomes = binomes.slice(indexOfFirstItem, indexOfLastItem);
+     const totalPages = Math.ceil(binomes.length / itemsPerPage);
+ 
+     // Fonction pour changer de page
+     const paginate = (pageNumber) => setCurrentPage(pageNumber);
+ 
+     // Fonction pour aller à la page précédente
+     const goToPreviousPage = () => {
+         if (currentPage > 1) {
+             setCurrentPage(currentPage - 1);
+         }
+     };
+ 
+     // Fonction pour aller à la page suivante
+     const goToNextPage = () => {
+         if (currentPage < totalPages) {
+             setCurrentPage(currentPage + 1);
+         }
+     };
+    
     return (
         <div>
             <Toaster richColors />
@@ -319,7 +273,9 @@ export default function GestBinome() {
             </div>
             <div className="mb-2 space-y-1">
                 <h1 className="text-2xl font-bold tracking-tight">Gestion des Binomes</h1>
-                <span className="text-sm font-normal">Créer , modifier , supprimer le Binome par filières</span>
+                <span className="text-sm font-normal">
+                    Filière sélectionnée : {filieres?.code}
+                </span>
             </div> 
             <div className='flex w-full justify-between gap-4 items-center mb-4'>
                 <SearchInfo className="flex-1"/>
@@ -448,7 +404,7 @@ export default function GestBinome() {
                                 <div className='flex gap-2 w-fit'>
                                     <Button type="submit" className="w-full">Ajouter</Button>
                                     <SheetClose asChild>
-                                        <Button className="w-full" variant="destructive">Fermer</Button>
+                                        <Button className="w-full" variant="destructive" onClick={()=>{resetFormadd()}}>Annuler</Button>
                                     </SheetClose>
                                 </div>
                             </SheetFooter>
@@ -470,7 +426,7 @@ export default function GestBinome() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {binomes.map((binome) => (
+                                {currentBinomes.map((binome) => (
                                     <TableRow key={binome.id}>
                                         <TableCell className="flex gap-1.5">
                                             {binome.etudiants.map((etudiant, index) => (
@@ -508,6 +464,7 @@ export default function GestBinome() {
                                                                 theme: binome.theme,
                                                                 programmation: binome.programmation
                                                             });
+                                                            setBinomeToUpdate(binome.id); // Stocker l'ID du binôme à modifier
                                                             setIsOpenUpdateForm(true);
                                                         }}>
                                                             Modifier
@@ -523,13 +480,188 @@ export default function GestBinome() {
                                 ))}
                             </TableBody>
                         </Table>
+                       
                     </div>
                 </div>
+                 {/* Ajout de la pagination en bas du tableau */}
+                {binomes.length > itemsPerPage && (
+                    <div className="w-full flex justify-center items-end">
+                        <Pagination>
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious 
+                                        className="cursor-pointer"
+                                        onClick={goToPreviousPage}
+                                        disabled={currentPage === 1}
+                                    />
+                                </PaginationItem>
+
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                                    <PaginationItem key={number}>
+                                        <PaginationLink
+                                            className="cursor-pointer"
+                                            isActive={number === currentPage}
+                                            onClick={() => paginate(number)}
+                                        >
+                                            {number}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationEllipsis />
+                                </PaginationItem>
+                                <PaginationItem>
+                                    <PaginationNext
+                                        className="cursor-pointer"
+                                        onClick={goToNextPage}
+                                        disabled={currentPage === totalPages}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </section>
 
             {/* Affichage du formulaire de modification */}
-            {isOpenUpdateForm && <UpdateForm />}
             {isDeleteDialogOpen && <Deletebinome/>}
+            {isOpenUpdateForm && (
+                <Sheet open={isOpenUpdateForm} onOpenChange={setIsOpenUpdateForm}>
+                    <SheetContent className="overflow-y-auto">
+                        <SheetHeader className="border-b pb-4 mb-4">
+                            <SheetTitle className="text-xl">Modifier le binôme</SheetTitle>
+                        </SheetHeader>
+
+                        <form onSubmit={handleUpdate} className='h-full flex flex-col justify-between'>
+                            <div className="grid gap-6 p-4">
+                                {/* Étudiant 1 */}
+                                <div className="grid items-center gap-3">
+                                    <Label htmlFor="etudiant1">Étudiant 1</Label>
+                                    <Select
+                                        value={newBinome.etudiants_matricules?.[0] || ""}
+                                        onValueChange={(value) => {
+                                            const newStudents = [...newBinome.etudiants_matricules];
+                                            newStudents[0] = value;
+                                            setNewBinome({ ...newBinome, etudiants_matricules: newStudents });
+                                        }}
+                                    >
+                                        <SelectTrigger className="col-span-3 w-full">
+                                            <SelectValue placeholder="Sélectionner un étudiant" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {etudiants.map((etudiant) => (
+                                                <SelectItem key={etudiant.matricule} value={etudiant.matricule}>
+                                                    {etudiant.nom} {etudiant.prenom}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Étudiant 2 */}
+                                <div className="grid items-center gap-3">
+                                    <Label htmlFor="etudiant2">Étudiant 2</Label>
+                                    <Select
+                                        value={newBinome.etudiants_matricules?.[1] || ""}
+                                        onValueChange={(value) => {
+                                            const newStudents = [...newBinome.etudiants_matricules];
+                                            newStudents[1] = value;
+                                            setNewBinome({ ...newBinome, etudiants_matricules: newStudents });
+                                        }}
+                                    >
+                                        <SelectTrigger className="col-span-3 w-full">
+                                            <SelectValue placeholder="Sélectionner un étudiant" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {etudiants.map((etudiant) => (
+                                                <SelectItem key={etudiant.matricule} value={etudiant.matricule}>
+                                                    {etudiant.nom} {etudiant.prenom}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Maître de mémoire */}
+                                <div className="grid items-center gap-3">
+                                    <Label htmlFor="maitre_memoire">Maître de mémoire</Label>
+                                    <Select
+                                        value={newBinome.maitre_memoire?.toString() || ""}
+                                        onValueChange={(value) => setNewBinome({
+                                            ...newBinome,
+                                            maitre_memoire: Number(value)
+                                        })}
+                                    >
+                                        <SelectTrigger className="col-span-3 w-full">
+                                            <SelectValue placeholder="Sélectionner un enseignant" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {enseignants.map((enseignant) => (
+                                                <SelectItem
+                                                    key={enseignant.id}
+                                                    value={enseignant.id.toString()}
+                                                >
+                                                    {enseignant.nom} {enseignant.prenom}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Thème */}
+                                <div className="grid items-center gap-3">
+                                    <Label htmlFor="theme">Thème</Label>
+                                    <Input
+                                        id="theme"
+                                        name="theme"
+                                        value={newBinome.theme}
+                                        onChange={handleChange}
+                                        placeholder="Entrez le thème du mémoire"
+                                    />
+                                </div>
+
+                                {/* Statut */}
+                                <div className="grid items-center gap-3">
+                                    <Label htmlFor="programmation">Statut</Label>
+                                    <Select
+                                        value={newBinome.programmation}
+                                        onValueChange={(value) => setNewBinome({
+                                            ...newBinome,
+                                            programmation: value
+                                        })}
+                                    >
+                                        <SelectTrigger className="col-span-3 w-full">
+                                            <SelectValue placeholder="Sélectionner un statut" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="est programmé">Est programmé</SelectItem>
+                                            <SelectItem value="non programmé">Non programmé</SelectItem>
+                                            <SelectItem value="refus">Refus</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            {/* Boutons */}
+                            <SheetFooter >
+                                <div className='flex gap-2 w-fit'>
+                                    <Button type="submit" className="w-full">
+                                        Modifier
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="destructive"
+                                        className="w-full"
+                                        onClick={() => setIsOpenUpdateForm(false)}
+                                    >
+                                        Annuler
+                                    </Button>
+                                </div>
+                            </SheetFooter>
+                        </form>
+                    </SheetContent>
+                </Sheet>
+            )}
         </div>
     )
 }

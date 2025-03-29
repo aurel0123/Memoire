@@ -10,7 +10,9 @@ import ListeEtu from '@/pages/listeetu'
 import FilieresList from "@/pages/FilieresList";
 import BinomesList from "@/pages/BinomesList";
 import GestBinome from '@/pages/GestBinome'
-
+import Planning from '@/pages/Planning'
+import FormsPlanning from '@/pages/FormsPlanning'
+import ListEtudiant from '@/pages/ListEtudiant'
 
 export default function routes() {
   return (
@@ -25,8 +27,10 @@ export default function routes() {
           <Route path="Etudiantlicence" element={<Etudiantlicence />}/>
           <Route path="FilieresList/binomes/:filiereId" element={<BinomesList />} />
           <Route path="FilieresList" element={<FilieresList />} />
-          <Route path='gestbinome' element = {<GestBinome/>} />
-          
+          <Route path='listeEtudiant/gestbinome/:filiereId' element = {<GestBinome/>} />
+          <Route path = "planninglicence" element ={<Planning/>} />
+          <Route path='listeEtudiant' element = {<ListEtudiant/>} />
+          <Route path = "planninglicence/formsPlanning" element = {<FormsPlanning/>} />
         </Route>
         <Route path="*" element={<div>404</div>} />
       </Routes>
