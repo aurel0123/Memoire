@@ -39,9 +39,36 @@ class ProcesVerbalSerializer(serializers.ModelSerializer):
 
 
 class MonomeSerializer(serializers.ModelSerializer):
+    etudiant = EtudiantSerializer(read_only=True)
+    
+    # Solution 1: Si vous voulez un seul matricule (relation OneToOne/ForeignKey)
+    etudiant_matricule = serializers.CharField(
+        write_only=True,
+        required=True,
+        #source='etudiant.matricule'  # Accède au matricule via la relation
+    )
     class Meta:
         model = Monome
-        fields = '__all__'
+        fields =  ['id', 'etudiant', 'etudiant_matricule', 'maitre_memoire', 'theme', 'programmation']
+    def update(self, instance, validated_data):
+        # Récupère etudiant_matricule seulement s'il est présent
+        etudiant_matricule = validated_data.pop('etudiant_matricule', None)
+        
+        # Mise à jour des autres champs
+        instance = super().update(instance, validated_data)
+        
+        # Gestion de l'étudiant seulement si matricule fourni
+        if etudiant_matricule is not None:
+            try:
+                etudiant = Etudiant.objects.get(matricule=etudiant_matricule)
+                instance.etudiant = etudiant
+            except Etudiant.DoesNotExist:
+                raise serializers.ValidationError(
+                    {'etudiant_matricule': f"Aucun étudiant trouvé avec le matricule {etudiant_matricule}"}
+                )
+        
+        instance.save()
+        return instance
 
 class BinomeSerializer(serializers.ModelSerializer):
     etudiants = EtudiantSerializer(many=True, read_only=True)  # Lecture seule
@@ -54,7 +81,7 @@ class BinomeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Binome
         fields = ['id', 'etudiants', 'etudiants_matricules', 'maitre_memoire', 'theme', 'programmation']
-        
+
     def update(self, instance, validated_data):
         etudiants_matricules = validated_data.pop('etudiants_matricules', None)
         

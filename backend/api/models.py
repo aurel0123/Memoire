@@ -264,23 +264,25 @@ class Binome(models.Model):
 
 
 class Monome(models.Model):
+    PROGRAMMATION = [
+        ('est programmé', 'Est programmé'),
+        ('non programmé', 'Non programmé'),
+        ('refus', 'Refus')
+    ]
+
     etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name='monome_etudiant')
     maitre_memoire = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='monomes_encadres')
     theme = models.CharField(max_length=200)
+    programmation = models.CharField(max_length=50 , choices=PROGRAMMATION, default = "non programmé" , verbose_name=_("Status de programmation"))
 
     def __str__(self):
         return f"Monôme {self.etudiant}"
 
     def clean(self):
         # Vérifier que l'étudiant est en Master 2 ou en Licence 3
-        if not (self.etudiant.est_en_master() or self.etudiant.est_en_licence()):
-            raise ValidationError(_("L'étudiant doit être en Master 2 ou en Licence 3."))
+        if not (self.etudiant.est_en_master()):
+            raise ValidationError(_("L'étudiant doit être en Master 2"))
         
-        # Si l'étudiant est en Licence 3, vérifier qu'il n'est pas déjà dans un binôme
-        if self.etudiant.est_en_licence():
-            if Binome.objects.filter(etudiant1=self.etudiant).exists() or Binome.objects.filter(etudiant2=self.etudiant).exists():
-                raise ValidationError(_("Un étudiant en Licence 3 ne peut pas être à la fois dans un binôme et un monôme."))
-
 
 
 class RoleJury(models.Model):

@@ -119,7 +119,6 @@ class BinomeViewSet(viewsets.ModelViewSet):
         theme = request.data.get("theme", instance.theme)
         programmation = request.data.get("programmation", instance.programmation)
         #Verifier si au moin un etudiant a été fournis
-        print(etudiants_matricules)
         if not etudiants_matricules: 
             return Response(
                 {"error" : "Un binôme doit être au moin composé de au moin un etudiant"}, 
@@ -177,6 +176,88 @@ class BinomeViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 class MonomeViewSet(viewsets.ModelViewSet):
     queryset = Monome.objects.all()
     serializer_class = MonomeSerializer
+
+    def create(self, request, *args, **kwargs):
+        etudiant_matricule = request.data.get('etudiant_matricule')
+        maitre_memoire = request.data.get("maitre_memoire")
+        theme = request.data.get("theme")
+        programmation = request.data.get("programmation")
+
+        if not etudiant_matricule:
+            return Response(
+                {"error": "Un Monome doit être composé d'un étudiant."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        etudiant = Etudiant.objects.filter(matricule=etudiant_matricule).first()
+
+        if not etudiant:
+            return Response(
+                {"error": "L'étudiant avec ce matricule n'existe pas."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if Monome.objects.filter(theme=theme).exists():
+            return Response(
+                {"error": f"Le thème '{theme}' est déjà utilisé."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Modifié: Filtrez par le champ de relation 'etudiant' au lieu de 'etudiant_matricule'
+        if Monome.objects.filter(etudiant__matricule=etudiant_matricule).exists():
+            return Response(
+                {"error": "Cet étudiant est déjà associé à un autre Monome."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Modifié: Utilisez le champ de relation 'etudiant' au lieu de 'etudiant_matricule'
+        monome = Monome.objects.create(
+            etudiant=etudiant,
+            maitre_memoire_id=maitre_memoire,
+            theme=theme,
+            programmation=programmation
+        )
+
+        serializer = self.get_serializer(monome)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        etudiant_matricule = request.data.get('etudiant_matricule')
+        maitre_memoire = request.data.get("maitre_memoire")
+        theme = request.data.get("theme")
+        programmation = request.data.get("programmation")
+
+        # Vérification de l'étudiant
+        if etudiant_matricule:
+            etudiant = Etudiant.objects.filter(matricule=etudiant_matricule).first()
+            if not etudiant:
+                return Response(
+                    {"error": "L'étudiant avec ce matricule n'existe pas."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Vérifie si un autre monôme utilise déjà cet étudiant
+            if Monome.objects.exclude(pk=instance.pk).filter(etudiant__matricule=etudiant_matricule).exists():
+                return Response(
+                    {"error": "Cet étudiant est déjà associé à un autre Monome."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Vérification du thème
+        if theme and Monome.objects.exclude(pk=instance.pk).filter(theme=theme).exists():
+            return Response(
+                {"error": f"Le thème '{theme}' est déjà utilisé."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Mise à jour partielle
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
