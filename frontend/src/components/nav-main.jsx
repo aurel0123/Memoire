@@ -3,7 +3,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -20,7 +19,7 @@ import { Link } from "react-router"
 export function NavMain({items}){
   return(
     <SidebarGroup>
-      <SidebarGroupLabel>Soutenance</SidebarGroupLabel>
+      <SidebarGroupLabel>Gestion de la soutenance</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item)=>(
           <Collapsible key={item.title} defaultOpen={item.isActive} asChild>

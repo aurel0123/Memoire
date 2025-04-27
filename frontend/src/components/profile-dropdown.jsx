@@ -15,7 +15,10 @@ import { Avatar } from "@radix-ui/react-avatar";
 import { AvatarFallback, AvatarImage } from "./ui/avatar";
 import profile from "@/assets/images/profile.webp";
 import { Link } from "react-router-dom";
+import AuthContext from "@/context/AuthContext";
+import { useContext } from "react";
 export default function ProfileDropdown() {
+  const { user, logoutUser } = useContext(AuthContext);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -31,7 +34,7 @@ export default function ProfileDropdown() {
           <div className="flex flex-col space-x-1">
             <p className="text-sm font-medium ">Admin</p>
             <p className="text-xs  text-muted-foreground"
-            >admin@gmail.com</p>
+            >{user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -57,10 +60,8 @@ export default function ProfileDropdown() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/logout">
-            Logout
-          </Link>
+        <DropdownMenuItem onClick={logoutUser}>
+          Déconnexion
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

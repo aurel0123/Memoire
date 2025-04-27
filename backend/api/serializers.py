@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Enseignant, Etudiant, Filiere, Groupe, Monome, Binome, Soutenance, ProcesVerbal
+from .models import Enseignant, Etudiant, Filiere, Groupe, Monome, Binome, Soutenance, ProcesVerbal , Evenements , CustomUser , Candidat  , Transaction
 from rest_framework.exceptions import ValidationError
 class FiliereSerializer(serializers.ModelSerializer):
     class Meta:
@@ -94,3 +94,28 @@ class BinomeSerializer(serializers.ModelSerializer):
             instance.etudiants.set(etudiants)
         
         return instance
+
+class EvenementsSerializer(serializers.ModelSerializer) : 
+
+    class Meta : 
+        model = Evenements 
+        fields = '__all__'
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        #fields = '__all__'  # Si vous voulez tous les champs  
+        fields = ['id', 'email', 'nom', 'prenom', 'is_approved', 'type_user']  # Liste des champs que vous voulez afficher
+
+
+class CandidatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Candidat
+        fields = ['id', 'nom', 'prenom', 'photo', 'description', 'link', 'votes', 'evenement']
+        read_only_fields = ['evenement']
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = '__all__'
+        read_only_fields = ('date_transaction', 'status')

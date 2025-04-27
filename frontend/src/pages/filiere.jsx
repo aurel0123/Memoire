@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetFooter,
   SheetHeader,
@@ -20,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { Plus, Pencil, Trash2, AlertCircle, X } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertCircle} from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import {
@@ -219,7 +218,7 @@ export default function Filiere() {
 
   return (
     <>
-      <Toaster richColors />
+      <Toaster richColors position="top-right" />
       <div className="mb-2 space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">Filière</h1>
         <span className="text-sm font-normal">

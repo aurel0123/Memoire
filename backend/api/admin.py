@@ -12,16 +12,16 @@ class CustomUserAdmin(BaseUserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     model = CustomUser
-    list_display = ('email' ,'username', 'is_staff', 'is_active',)
+    list_display = ('email' ,'username', 'is_staff', 'is_active','is_approved')
     list_filter = ('email','username','is_staff', 'is_active',)
     fieldsets = (
-        (None, {'fields': ('email', 'username' ,'phone','type_user', 'password')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser', 'groups', 'user_permissions',)}),   #'is_customer' , 'is_seller'
+        (None, {'fields': ('email', 'username' ,'phone','type_user','nom' , 'prenom', 'password')}),
+        ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser','is_approved', 'groups', 'user_permissions',)}),   #'is_customer' , 'is_seller'
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'phone', 'type_user', 'username' , 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('email', 'phone', 'type_user', 'username'  , 'password1', 'password2', 'is_staff', 'is_active', 'is_approved')}
         ),
     )
     search_fields = ('email',)
@@ -41,3 +41,6 @@ admin.site.register(Binome)
 admin.site.register(RoleJury)
 admin.site.register(Soutenance)
 admin.site.register(ProcesVerbal)
+admin.site.register(Evenements)
+admin.site.register(Candidat)
+admin.site.register(Transaction)

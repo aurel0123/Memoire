@@ -1,27 +1,14 @@
-import React from 'react'
+import React , {useContext} from 'react'
 import { Button } from '@/components/ui/button'
 import { Toaster } from "@/components/ui/sonner"
 import { toast } from "sonner"
+import NavBar from '@/components/NavBar'
+import Hero from '@/layouts/Hero'
 
 export default function LandingPage() {
   return (
     <div>
-    <Toaster variant="destructive"/>
-       <Button
-      variant="outline"
-      onClick={() =>
-        toast("Event has been created", {
-          description: "Sunday, December 03, 2023 at 9:00 AM",
-          variant: "destructive",
-          action: {
-            label: "Undo",
-            onClick: () => console.log("Undo"),
-          },
-        })
-      }
-    >
-      Show Toast
-    </Button>
+      <NavBar/>
     </div>
   )
 }

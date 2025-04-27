@@ -21,7 +21,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 
-export default function Searchs() {
+export default function Searchs({className}) {
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -41,7 +41,7 @@ export default function Searchs() {
       <Button
         variant="outline"
         className={cn(
-          "relative h-8 w-full flex-1 justify-start rounded-md bg-muted/25 text-sm font-normal text-muted-foreground shadow-none hover:bg-muted/50 sm:pr-12 md:w-40 md:flex-none lg:w-56 xl:w-64"
+          `relative h-8 w-full flex-1 justify-start rounded-md bg-muted/25 text-sm font-normal text-muted-foreground shadow-none hover:bg-muted/50 sm:pr-12 md:w-40 md:flex-none lg:w-56 xl:w-64 ${className}`
         )}
         onClick={() => setOpen((open) => !open)}
       >

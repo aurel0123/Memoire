@@ -8,7 +8,8 @@ import {
   Map,
   PieChart,
   Settings2,
-  SquareTerminal,
+  CalendarFold, 
+  User
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -50,7 +51,7 @@ const data = {
     {
       title: "Filières",
       url: "filiere",
-      icon: SquareTerminal,
+      icon: User,
       isActive: false,
     },  
     {
@@ -58,6 +59,66 @@ const data = {
       url: "Enseignant",
       icon: BookOpen,
     },
+    {
+      title: "Etudiants",
+      url: "#",
+      icon: Bot,
+      isActive: false,
+      items: [
+        {
+          title: "Licence & Master", 
+          url: "Etudiantlicence",
+        },
+        {
+          title: "Binomes & Monomes",
+          url: "FilieresList",
+        },
+      ],
+
+      
+    },
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings2,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+    
+  ],
+  navEvents: [
+    {
+      title: "Evènements",
+      url: "",
+      icon: CalendarFold,
+      isActive: true,
+      items : [
+        {
+          title: "Mes évènements",
+          url: "list-events",
+        },
+        {
+          title: "Créer un évènement",
+          url: "create-event",
+        }
+      ]
+    },  
     {
       title: "Etudiants",
       url: "#",
@@ -131,7 +192,7 @@ export default function AppSidebar(props) {
         {/* Ajout du ScrollArea ici pour que seul le contenu central défile */}
         <ScrollArea className="h-full rounded-md">
           <NavMain items={data.navMain} />
-          <NavVote items={data.navMain} />
+          <NavVote items={data.navEvents} />
           
         </ScrollArea>
       </SidebarContent>
