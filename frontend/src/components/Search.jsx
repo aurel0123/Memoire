@@ -59,17 +59,17 @@ export default function Searchs({className}) {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Suggestions">
-            <CommandItem>
+            <CommandItem >
               <Calendar />
-              <span>Calendar</span>
+              <span>Filiere</span>
             </CommandItem>
             <CommandItem>
               <Smile />
-              <span>Search Emoji</span>
+              <span>Enseignants</span>
             </CommandItem>
             <CommandItem>
               <Calculator />
-              <span>Calculator</span>
+              <span>Mes évènements</span>
             </CommandItem>
           </CommandGroup>
           <CommandSeparator />

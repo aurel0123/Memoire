@@ -11,3 +11,13 @@ Gérer la création du binome avec un seule etudiant gerer le au niveau du backe
   "email": "kodjogbeaurel@gmail.com",
   "password": "Kodjogbe12"
 }
+
+Taches à réaliser 
+Créations de l'interface Utilisateurs pour gérer les utilisateurs
+Ajout des pagination pour les interfaces Filieres , Enseignants et Etudiants
+Renommer l'interface enseignants en Membres jury
+Création du générateur De pV plus importation des PV en format PDF
+Création de l'interface pour la gestion des PV
+Création de l'interface pour la gestion des planning de soutenances
+Creation des interfaces pour le menu setting 
+Création de l'interface pour la gestion des parametres de l'application

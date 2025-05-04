@@ -64,11 +64,12 @@ export default function GestBinome() {
 
     const fetchBinomes = async () => {
         try {
-            const res = await axios.get('http://127.0.0.1:8000/api/binomes/');
+            const res = await axios.get('/api/binomes/');
+            
             if (res.status === 200) {
                 const filteredBinomes = res.data.filter(binome => 
-                    binome.etudiants[0].filiere === parseInt(filiereId) &&
-                    binome.etudiants[1].filiere === parseInt(filiereId)  // Remplacez 8 par l'ID souhaité
+                    binome.etudiants[0]?.filiere === parseInt(filiereId) ||
+                    binome.etudiants[1]?.filiere === parseInt(filiereId)  // Remplacez 8 par l'ID souhaité
                 );
                 setBinomes(filteredBinomes);  // Stocke uniquement les binômes filtrés
             }
@@ -76,6 +77,7 @@ export default function GestBinome() {
             toast.error("Erreur", {
                 description: `Impossible de charger les binômes: ${error.message}`,
             });
+            console.log(error.response)
         } finally {
             setLoading(false);
         }
@@ -403,7 +405,6 @@ export default function GestBinome() {
              setCurrentPage(currentPage + 1);
          }
      };
-    console.log(newMonome)
     return (
         <div>
             <Toaster richColors />

@@ -18,8 +18,8 @@ export default function Page() {
       <AppSidebar />
       <SidebarInset>
       <header
-          className="sticky top-0 z-30 flex h-16 items-center gap-2 px-4 bg-white/30 backdrop-blur-md border-b
-          dark:bg-gray-900/50 transition-all"
+          className="sticky top-0 z-30 flex h-16 items-center gap-2 px-4 bg-white border-b dark:bg-gray-900 transition-all"
+
         >
           {/* Conteneur du header */}
           <div className="flex w-full justify-between items-center">

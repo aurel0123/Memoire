@@ -158,7 +158,7 @@
   background: var(--muted);
   border-radius: 10px;
 }
-.glass-navbar {
+/* .glass-navbar {
   position: fixed;
   top: 0;
   width: 100%;
@@ -167,7 +167,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   z-index: 20;
-}
+} */
 input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;

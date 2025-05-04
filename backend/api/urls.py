@@ -26,17 +26,15 @@ urlpatterns = [
     path('inscription/', register_user, name='register'),
     path('connexion/', login_user, name='register'),
     path('refresh-token/', refresh_token, name='refresh-token'),
+     path('api/import-etudiants/', import_etudiants, name='import_etudiants'),
     path('evenements/<int:evenement_id>/candidats/<int:pk>/', CandidatDetailView.as_view(), name='candidat_detail'),
     path(
-        'evenements/<int:evenement_id>/candidats/<int:candidat_id>/transactions/',
+        'api/evenements/<int:evenement_id>/candidats/<int:candidat_id>/details/transactions/',
         TransactionListView.as_view(),
         name='transaction-list'
     ),
-    path(
-        'evenements/<int:evenement_id>/candidats/<int:candidat_id>/transactions/create/',
-        CreateTransactionView.as_view(),
-        name='create-transaction'
-    ),
+    path('api/evenements/<int:evenement_id>/candidats/<int:candidat_id>/transactions/', CreateTransactionView.as_view(), name='create-transaction'),
+    path('api/evenements/<int:evenement_id>/candidats/<int:candidat_id>/transactions/<str:transaction_id>/', UpdateTransactionView.as_view(), name='update-transaction'),
     path('api/me/',get_current_user, name='current_user'),
     path('deconnexion/', logout_user, name='logout'),
 ]

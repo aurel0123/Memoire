@@ -9,7 +9,8 @@ import {
   PieChart,
   Settings2,
   CalendarFold, 
-  User
+  User,
+  UsersRound
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -23,31 +24,42 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import AuthContext from '@/context/AuthContext';
+import { useContext , useState} from "react"
+import { NavOther } from "./nav-other"
+
 // This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
-      name: "Acme Inc",
+      name: "Pigier Bénin",
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
+      url: "/",
+    }
   ],
   navMain: [
+    {
+      title: "Dashboard",
+      url: "",
+      icon: PieChart,
+      isActive: true,
+    },
+    {
+      title: "Calendrier",
+      url: "calendrier",
+      icon: CalendarFold,
+    },
+    {
+      title: "Salles",
+      url: "salle",
+      icon: Map,
+    },
+    {
+      title: "Réservations",
+      url: "reservation",
+      icon: BookOpen,
+    },
     {
       title: "Filières",
       url: "filiere",
@@ -63,7 +75,7 @@ const data = {
       title: "Etudiants",
       url: "#",
       icon: Bot,
-      isActive: false,
+      isActive: true,
       items: [
         {
           title: "Licence & Master", 
@@ -71,34 +83,12 @@ const data = {
         },
         {
           title: "Binomes & Monomes",
-          url: "FilieresList",
+          //url: "FilieresList",
+          url: "listeetudiant",
         },
       ],
 
       
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
     },
     
   ],
@@ -119,23 +109,13 @@ const data = {
         }
       ]
     },  
+  ],
+  NavOther: [
     {
-      title: "Etudiants",
-      url: "#",
-      icon: Bot,
-      isActive: false,
-      items: [
-        {
-          title: "Licence & Master", 
-          url: "Etudiantlicence",
-        },
-        {
-          title: "Binomes & Monomes",
-          url: "FilieresList",
-        },
-      ],
-
-      
+      title: "Utilisateurs",
+      url: "users",
+      icon: UsersRound,
+      isActive: true,
     },
     {
       title: "Settings",
@@ -162,26 +142,13 @@ const data = {
     },
     
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
 }
 
 export default function AppSidebar(props) {
+  const { user , logoutUser } = useContext(AuthContext);
+  const [profile, setProfile] = useState(user);
+
+
 
   return (
     <Sidebar collapsible="icon" {...props} variant="">
@@ -193,11 +160,11 @@ export default function AppSidebar(props) {
         <ScrollArea className="h-full rounded-md">
           <NavMain items={data.navMain} />
           <NavVote items={data.navEvents} />
-          
+          <NavOther items={data.NavOther} />
         </ScrollArea>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={profile} logoutUser = {logoutUser}/>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

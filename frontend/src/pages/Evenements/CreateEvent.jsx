@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import AuthContext from "@/context/AuthContext";
 import { useContext } from "react";
 import axios from "axios";
+import {useNavigate} from 'react-router-dom';
 
 export default function CreateEvent() {
   const [dateDebut, setDateDebut] = React.useState();
@@ -25,7 +26,7 @@ export default function CreateEvent() {
   const [events, setEvents] = React.useState({});
   const { user } = useContext(AuthContext);
   const [isLoading, setIsLoading] = React.useState(false);
-
+  const navigate = useNavigate();
   // Utiliser useEffect pour définir l'ID de l'utilisateur une seule fois au montage
   React.useEffect(() => {
     if (user?.id) {
@@ -134,6 +135,8 @@ export default function CreateEvent() {
           toast.success("L'évènement a été créé avec succès");
           resetForm(); // Réinitialiser le formulaire après le succès
         }, 2000);
+
+        navigate('/dashboard/list-events');
       } catch (error) {
         toast.error("Une erreur est survenue lors de la création de l'évènement", 
           {description : error.message}
@@ -153,7 +156,7 @@ export default function CreateEvent() {
         <h1 className="text-2xl font-bold tracking-tight">
           Créer un évènement
         </h1>
-        <span className="text-sm font-normal">Créér vos évènements</span>
+        <span className="text-sm font-normal text-gray-500">Créér vos évènements</span>
       </div>
 
       {/* Création du formulaire d'évènement */}
@@ -281,7 +284,7 @@ export default function CreateEvent() {
               </div>
             </div>
           </div>
-          <Button type="submit" className="mt-4" disabled={isLoading}>
+          <Button type="submit" className="mt-4 rounded-xl cursor-pointer" disabled={isLoading}>
             {isLoading ? "Création..." : "Créer l'évènement"}
           </Button>
         </form>

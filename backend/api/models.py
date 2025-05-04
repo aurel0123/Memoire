@@ -514,6 +514,7 @@ class Candidat(models.Model):
     prenom = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='candidats/', blank=True, null=True)
     description = models.TextField(blank=True)
+    telephone = models.CharField(max_length=100, blank=True, null=True)
     link = models.URLField(blank=True, null=True)  # Lien unique pour voter
     votes = models.PositiveIntegerField(default=0)
 

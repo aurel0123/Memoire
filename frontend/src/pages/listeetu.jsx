@@ -3,9 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import * as XLSX from 'xlsx';
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetFooter,
   SheetHeader,
@@ -32,7 +32,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Users, User } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Plus, Pencil, Trash2, Users, User, Import } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -73,6 +80,8 @@ export default function ListeEtu() {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isBinomeSheetOpen, setIsBinomeSheetOpen] = useState(false);
   const [isMonomeSheetOpen, setIsMonomeSheetOpen] = useState(false);
+  const [excelData, setExcelData] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
   const [newBinome, setNewBinome] = useState({
     etudiant1: "",
     etudiant2: "",
@@ -84,8 +93,42 @@ export default function ListeEtu() {
     maitre_memoire: "",
     theme: "",
   });
+  const [file , setFile] = useState(null);
   const navigate = useNavigate();
 
+  const handleUpload = async () => {
+    if (!file) return;
+  
+    const formData = new FormData();
+    formData.append("file", file);
+  
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/import-etudiants/", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur lors de l'importation");
+      }
+  
+      const data = await response.json();
+      toast.success("Succès", {
+        description: data.message || "Importation réussie",
+      });
+      
+      // Fermer la prévisualisation et rafraîchir les données
+      setShowPreview(false);
+      setFile(null);
+      setExcelData([]);
+      await fetchEtudiants();
+    } catch (error) {
+      toast.error("Erreur", {
+        description: error.message || "Erreur lors de l'importation",
+      });
+    }
+  };
   // Récupérer les étudiants
   const fetchEtudiants = async () => {
     try {
@@ -340,9 +383,49 @@ export default function ListeEtu() {
     navigate(-1);
   };
 
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    setFile(file);
+  
+    try {
+      const data = await readExcelFile(file);
+      setExcelData(data);
+      setShowPreview(true);
+    } catch (error) {
+      toast.error("Erreur", {
+        description: "Impossible de lire le fichier Excel",
+      });
+    }
+  };
+  
+  const readExcelFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+          resolve(jsonData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  console.log(newEtudiant);
   return (
     <>
       <Toaster richColors />
+      <Button onClick={handleGoBack}>Retour</Button>
       <div className="mb-2 space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">
           Liste des Étudiants
@@ -351,106 +434,130 @@ export default function ListeEtu() {
           Filière sélectionnée : {filiere?.code}
         </span>
       </div>
-      <div>
-        <SearchInfo/>
-      </div>
-      <div className="mb-4">
-        <Button onClick={handleGoBack}>Retour</Button>
-        <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
-          <SheetTrigger asChild>
-            <Button className="ml-2">
-              <Plus className="mr-2" /> Ajouter un étudiant
+     
+      <div className="mb-4 flex items-center gap-6">
+        <Input 
+          type="search"
+          placeholder="Rechercher"
+          className="rounded-xl"
+        />
+        <div className="flex items-center gap-2">
+          <Sheet open={isAddSheetOpen} onOpenChange={setIsAddSheetOpen}>
+            <SheetTrigger asChild>
+              <Button className="ml-2 rounded-xl">
+                <Plus className="mr-2" /> Ajouter un étudiant
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <form onSubmit={handleAddEtudiant}>
+                <SheetHeader className="border-b bg-muted">
+                  <SheetTitle>Ajouter un étudiant</SheetTitle>
+                </SheetHeader>
+                <div className="grid gap-6 p-4">
+                  <div className="grid items-center gap-3">
+                    <Label htmlFor="matricule" className="text-right">
+                      Matricule
+                    </Label>
+                    <Input
+                      id="matricule"
+                      value={newEtudiant.matricule}
+                      onChange={(e) =>
+                        setNewEtudiant({
+                          ...newEtudiant,
+                          matricule: e.target.value,
+                        })
+                      }
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid items-center gap-3">
+                    <Label htmlFor="nom" className="text-right">
+                      Nom
+                    </Label>
+                    <Input
+                      id="nom"
+                      value={newEtudiant.nom}
+                      onChange={(e) =>
+                        setNewEtudiant({ ...newEtudiant, nom: e.target.value })
+                      }
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid items-center gap-3">
+                    <Label htmlFor="prenom" className="text-right">
+                      Prénom
+                    </Label>
+                    <Input
+                      id="prenom"
+                      value={newEtudiant.prenom}
+                      onChange={(e) =>
+                        setNewEtudiant({ ...newEtudiant, prenom: e.target.value })
+                      }
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid items-center gap-3">
+                    <Label htmlFor="date_naissance" className="text-right">
+                      Date de naissance
+                    </Label>
+                    <Input
+                      id="date_naissance"
+                      type="date"
+                      value={newEtudiant.date_naissance}
+                      onChange={(e) =>
+                        setNewEtudiant({
+                          ...newEtudiant,
+                          date_naissance: e.target.value,
+                        })
+                      }
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid items-center gap-3">
+                    <Label htmlFor="lieu_naissance" className="text-right">
+                      Lieu de naissance
+                    </Label>
+                    <Input
+                      id="lieu_naissance"
+                      value={newEtudiant.lieu_naissance}
+                      onChange={(e) =>
+                        setNewEtudiant({
+                          ...newEtudiant,
+                          lieu_naissance: e.target.value,
+                        })
+                      }
+                      className="col-span-3"
+                    />
+                  </div>
+                </div>
+                <SheetFooter>
+                  <Button type="submit">Ajouter</Button>
+                </SheetFooter>
+              </form>
+            </SheetContent>
+          </Sheet>
+          <div className="relative">
+            <Button
+              type="button"
+              className="bg-green-600 dark:bg-green-800 hover:bg-green-700 dark:hover:bg-green-700 rounded-xl flex items-center gap-2"
+              onClick={() => document.getElementById("file-upload").click()}
+            >
+              <Import className="w-4 h-4" />
+              Importer Excel
             </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <form onSubmit={handleAddEtudiant}>
-              <SheetHeader className="border-b bg-muted">
-                <SheetTitle>Ajouter un étudiant</SheetTitle>
-              </SheetHeader>
-              <div className="grid gap-6 p-4">
-                <div className="grid items-center gap-3">
-                  <Label htmlFor="matricule" className="text-right">
-                    Matricule
-                  </Label>
-                  <Input
-                    id="matricule"
-                    value={newEtudiant.matricule}
-                    onChange={(e) =>
-                      setNewEtudiant({
-                        ...newEtudiant,
-                        matricule: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid items-center gap-3">
-                  <Label htmlFor="nom" className="text-right">
-                    Nom
-                  </Label>
-                  <Input
-                    id="nom"
-                    value={newEtudiant.nom}
-                    onChange={(e) =>
-                      setNewEtudiant({ ...newEtudiant, nom: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid items-center gap-3">
-                  <Label htmlFor="prenom" className="text-right">
-                    Prénom
-                  </Label>
-                  <Input
-                    id="prenom"
-                    value={newEtudiant.prenom}
-                    onChange={(e) =>
-                      setNewEtudiant({ ...newEtudiant, prenom: e.target.value })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid items-center gap-3">
-                  <Label htmlFor="date_naissance" className="text-right">
-                    Date de naissance
-                  </Label>
-                  <Input
-                    id="date_naissance"
-                    type="date"
-                    value={newEtudiant.date_naissance}
-                    onChange={(e) =>
-                      setNewEtudiant({
-                        ...newEtudiant,
-                        date_naissance: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid items-center gap-3">
-                  <Label htmlFor="lieu_naissance" className="text-right">
-                    Lieu de naissance
-                  </Label>
-                  <Input
-                    id="lieu_naissance"
-                    value={newEtudiant.lieu_naissance}
-                    onChange={(e) =>
-                      setNewEtudiant({
-                        ...newEtudiant,
-                        lieu_naissance: e.target.value,
-                      })
-                    }
-                    className="col-span-3"
-                  />
-                </div>
-              </div>
-              <SheetFooter>
-                <Button type="submit">Ajouter</Button>
-              </SheetFooter>
-            </form>
-          </SheetContent>
-        </Sheet>
-        {filiere && filiere.niveau === "L3" && (
+
+            <input
+              id="file-upload"
+              type="file"
+              accept=".xlsx, .xls"
+              onChange={handleFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              style={{ display: "none" }}
+            />
+          </div>
+
+        </div>
+       {/*  {filiere && filiere.niveau === "L3" && (
           <>
             <Sheet open={isBinomeSheetOpen} onOpenChange={setIsBinomeSheetOpen}>
               <SheetTrigger asChild>
@@ -705,7 +812,7 @@ export default function ListeEtu() {
               </form>
             </SheetContent>
           </Sheet>
-        )}
+        )} */}
       </div>
 
       {loading ? (
@@ -911,6 +1018,68 @@ export default function ListeEtu() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay noir semi-transparent */}
+          <div className="absolute inset-0 bg-black opacity-50" />
+
+          {/* Contenu de la modale */}
+          <div className="relative z-10 bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Prévisualisation du fichier Excel</h3>
+              
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    {excelData.length > 0 &&
+                      Object.keys(excelData[0]).map((key) => (
+                        <th
+                          key={key}
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          {key}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {excelData.slice(0, 10).map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, i) => (
+                        <td
+                          key={i}
+                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200"
+                        >
+                          {value}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {excelData.length > 10 && (
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  + {excelData.length - 10} autres lignes...
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex justify-end gap-3">
+              <Button onClick={handleUpload} className="bg-green-600 hover:bg-green-700">
+                Importer
+              </Button>
+              <Button variant="outline" onClick={() => setShowPreview(false)} className="mr-2">
+                Annuler
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 }

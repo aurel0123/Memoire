@@ -22,7 +22,11 @@ import Event from '@/pages/Evenements/Event'
 import CreateEvent from '@/pages/Evenements/CreateEvent'
 import ListEvents from '@/pages/Evenements/ListEvents'
 import EditEvent from '@/pages/Evenements/EditEvent'
-import Candidats from '@/pages/Candidats/Canditats'
+import ViewsEvenement from '@/pages/Evenements/ViewsEvenement'
+import AddCandidat from '@/pages/Candidats/AddCandidat'
+import EditCandidat from '@/pages/Candidats/EditCandidat'
+import NotFoundError from '@/pages/Error/not-found-error'
+import Users from '@/pages/users/Users'
 export default function AppRoutes() {
   return (
     <Router>
@@ -54,10 +58,13 @@ export default function AppRoutes() {
             <Route path="create-event" element={<CreateEvent />} />
             <Route path="list-events" element={<ListEvents />} />
             <Route path="edit-event/:eventId" element={<EditEvent />} />
-            <Route path ="event/:eventNom/:Id/candidats" element={<Candidats/>}/>
+            <Route path ="event/:eventNom/:Id/candidats" element={<ViewsEvenement/>}/>
+            <Route path ="event/:eventNom/:Id/candidats/add" element={<AddCandidat/>}/>
+            <Route path ="event/:eventNom/:Id/candidats/edit/:candidatId" element={<EditCandidat/>}/>
+            <Route path='users' element= {<Users/>} />
           </Route>
 
-          <Route path="*" element={<div>404 - Page non trouvée</div>} />
+          <Route path="*" element={<NotFoundError/>} />
         </Routes>
       </AuthProvider>
     </Router>

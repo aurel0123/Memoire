@@ -105,17 +105,34 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         #fields = '__all__'  # Si vous voulez tous les champs  
-        fields = ['id', 'email', 'nom', 'prenom', 'is_approved', 'type_user']  # Liste des champs que vous voulez afficher
+        fields = ['id', 'email', 'nom', 'prenom', 'is_approved', 'username' ,  'type_user']  # Liste des champs que vous voulez afficher
 
 
 class CandidatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Candidat
-        fields = ['id', 'nom', 'prenom', 'photo', 'description', 'link', 'votes', 'evenement']
+        fields = ['id', 'nom', 'prenom', 'photo', 'description', 'link', 'votes', 'evenement','telephone']
         read_only_fields = ['evenement']
 
 class TransactionSerializer(serializers.ModelSerializer):
+    telephone = serializers.CharField(write_only=True, required=True)
+    nombreVotes = serializers.IntegerField(write_only=True, required=True)
+    
     class Meta:
         model = Transaction
-        fields = '__all__'
-        read_only_fields = ('date_transaction', 'status')
+        fields = ['id', 'transaction_id', 'montant', 'status', 'date_transaction', 'candidat', 'telephone', 'nombreVotes']
+        read_only_fields = ['id', 'transaction_id', 'date_transaction']
+    
+    def create(self, validated_data):
+        # Extraire les champs non-modèle
+        telephone = validated_data.pop('telephone', None)
+        nombre_votes = validated_data.pop('nombreVotes', 1)
+        
+        # Générer un ID unique pour la transaction
+        import uuid
+        validated_data['transaction_id'] = str(uuid.uuid4())
+        
+        # Créer la transaction
+        transaction = super().create(validated_data)
+        
+        return transaction

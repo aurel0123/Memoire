@@ -47,8 +47,8 @@ export default function ListEtudiant() {
   return (
       <div className="max-w-full">
           <div className="mb-2 space-y-1">
-              <h1 className="text-2xl font-bold tracking-tight">Etudiants par Filière</h1>
-              <span className="text-sm font-normal">Gérer vos filières</span>
+              <h1 className="text-2xl font-bold tracking-tight">Gestion des Binômes et Monômes</h1>
+              <span className="text-sm font-normal">Gérer vos binômes et monômes</span>
           </div>
 
           {/* Barre de recherche */}

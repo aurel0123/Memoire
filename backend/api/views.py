@@ -16,7 +16,9 @@ from rest_framework.exceptions import AuthenticationFailed , PermissionDenied
 from django.utils import timezone
 from django.utils.timezone import now
 from django.middleware import csrf
-
+import uuid
+import pandas as pd
+import io
 # Create your views here.
 
 
@@ -449,6 +451,9 @@ class EvenementsViewSet(viewsets.ModelViewSet) :
         return Response({'message' : 'Evènement créer avec succes'} ,status=status.HTTP_200_OK)
 
     def list(self, request , *args , **kwargs) : 
+        # Nettoyage automatique des événements terminés avant de récupérer la liste
+        self.nettoyer_evenements_termines()
+        
         events = self.queryset.all()
 
         for event in events : 
@@ -475,6 +480,9 @@ class EvenementsViewSet(viewsets.ModelViewSet) :
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticatedOrReadOnly])
     def mes_evenements(self, request):
         """Renvoie les événements de l'utilisateur connecté. Si admin, renvoie tout."""
+        # Nettoyage automatique des événements terminés avant de récupérer la liste
+        self.nettoyer_evenements_termines()
+        
         user = request.user
         if user.is_staff:
             evenements = Evenements.objects.all()
@@ -485,8 +493,26 @@ class EvenementsViewSet(viewsets.ModelViewSet) :
 
     def nettoyer_evenements_termines(self):
         """Supprime les événements terminés depuis plus de 24 heures."""
-        expiration = now() - timedelta(hours=24)
-        Evenements.objects.filter(date_fin__lt=expiration).delete()
+        try:
+            # Récupérer la date limite (24 heures avant maintenant)
+            date_limite = timezone.now() - timezone.timedelta(hours=24)
+            
+            # Récupérer les événements terminés depuis plus de 24 heures
+            evenements_a_supprimer = Evenements.objects.filter(
+                date_fin__lt=date_limite,
+                status='terminé'
+            )
+            
+            # Supprimer les événements
+            nombre_supprimes = evenements_a_supprimer.delete()[0]
+            
+            # Log pour le débogage
+            print(f"Nombre d'événements supprimés : {nombre_supprimes}")
+            
+            return nombre_supprimes
+        except Exception as e:
+            print(f"Erreur lors du nettoyage des événements : {str(e)}")
+            return 0
 
 
 class CandidatViewSet(viewsets.ModelViewSet):
@@ -555,6 +581,50 @@ class CandidatDetailView(generics.RetrieveAPIView):
         except Candidat.DoesNotExist:
             raise PermissionDenied("Candidat non trouvé dans cet événement.")
 
+
+@csrf_exempt
+def import_etudiants(request):
+    if request.method == 'POST' and request.FILES.get('file'):
+        excel_file = request.FILES['file']
+        
+        try:
+            # Lire le fichier Excel avec pandas
+            data = pd.read_excel(excel_file)
+            
+            # Valider les colonnes nécessaires
+            print(data)
+            print(data.columns)
+            required_columns = ['matricule', 'nom', 'prenom', 'date_naissance', 'lieu_naissance', 'filiere_code']
+            if not all(col in data.columns for col in required_columns):
+                return JsonResponse({'error': 'Colonnes manquantes dans le fichier Excel'}, status=400)
+            
+            # Traiter chaque ligne
+            for _, row in data.iterrows():
+                try:
+                    # Trouver la filière
+                    filiere = Filiere.objects.get(code=row['filiere_code'])
+                    
+                    # Créer ou mettre à jour l'étudiant
+                    Etudiant.objects.update_or_create(
+                        matricule=row['matricule'],
+                        defaults={
+                            'nom': row['nom'],
+                            'prenom': row['prenom'],
+                            'date_naissance': row['date_naissance'],
+                            'lieu_naissance': row['lieu_naissance'],
+                            'filiere': filiere
+                        }
+                    )
+                except Filiere.DoesNotExist:
+                    continue  # ou logger l'erreur
+            
+            return JsonResponse({'message': 'Importation réussie'}, status=200)
+        
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Méthode non autorisée ou fichier manquant'}, status=400)
+
 class TransactionListView(generics.ListAPIView):
     """Liste des transactions pour un événement et un candidat (GET)"""
     serializer_class = TransactionSerializer
@@ -564,8 +634,8 @@ class TransactionListView(generics.ListAPIView):
         evenement_id = self.kwargs['evenement_id']
         candidat_id = self.kwargs['candidat_id']
         return Transaction.objects.filter(
-            evenement_id=evenement_id, 
-            candidat_id=candidat_id
+            candidat_id=candidat_id,
+            candidat__evenement_id=evenement_id
         )
 
 class CreateTransactionView(generics.CreateAPIView):
@@ -573,39 +643,95 @@ class CreateTransactionView(generics.CreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [AllowAny]
-
+    
     def create(self, request, *args, **kwargs):
-        evenement_id = kwargs['evenement_id']
-        candidat_id = kwargs['candidat_id']
+        evenement_id = kwargs.get('evenement_id')
+        candidat_id = kwargs.get('candidat_id')
         
         try:
             evenement = Evenements.objects.get(id=evenement_id)
-            candidat = Candidat.objects.get(id=candidat_id)
+            candidat = Candidat.objects.get(id=candidat_id, evenement=evenement)
         except (Evenements.DoesNotExist, Candidat.DoesNotExist):
             return Response(
-                {"detail": "Événement ou candidat introuvable"},
+                {"detail": "Événement ou candidat introuvable"}, 
                 status=status.HTTP_404_NOT_FOUND
             )
-
-        transaction_data = {
-            'candidat': candidat.id,
-            'montant': 0,
-            'status': 'completed',
-            'date_transaction': timezone.now()
-        }
-
-        serializer = self.get_serializer(data=transaction_data)
+        
+        # Vérifier si l'événement est actif
+        now = timezone.now()
+        date_debut = evenement.date_debut
+        date_fin = evenement.date_fin
+        
+        if now < date_debut:
+            return Response(
+                {"detail": "L'événement n'a pas encore commencé"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if now > date_fin:
+            return Response(
+                {"detail": "L'événement est terminé"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Ajout des données nécessaires à la transaction
+        data = request.data.copy()
+        data['candidat'] = candidat_id
+        data['status'] = 'pending'  # La transaction est initialement en attente
+        
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         
-        # Mise à jour du compteur de votes
-        candidat.votes += 1
-        candidat.save()
-
         headers = self.get_success_headers(serializer.data)
         return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
+            serializer.data, 
+            status=status.HTTP_201_CREATED, 
             headers=headers
         )
 
+class UpdateTransactionView(generics.UpdateAPIView):
+    """Mise à jour du statut d'une transaction (PATCH)"""
+    queryset = Transaction.objects.all()
+    serializer_class = TransactionSerializer
+    permission_classes = [AllowAny]
+    lookup_field = 'transaction_id'
+    
+    def update(self, request, *args, **kwargs):
+        transaction_id = kwargs.get('transaction_id')
+        evenement_id = kwargs.get('evenement_id')
+        candidat_id = kwargs.get('candidat_id')
+        
+        try:
+            transaction = Transaction.objects.get(
+                transaction_id=transaction_id,
+                candidat_id=candidat_id
+            )
+        except Transaction.DoesNotExist:
+            return Response(
+                {"detail": "Transaction introuvable"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Debugging logs
+        print(f"Status dans la requête : {request.data.get('status')}")
+        print(f"Status actuel de la transaction : {transaction.status}")
+        
+        # Mise à jour partielle de la transaction (status uniquement)
+        serializer = self.get_serializer(transaction, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Si le statut est passé à 'completed', on incrémente le nombre de votes
+        if request.data.get('status') == 'completed' :
+            # Récupérer le nombre de votes à ajouter
+            nombre_votes = request.data.get('nombreVotes', 1)
+            print(f"Nombre de votes récupérés : {nombre_votes}")
+            
+            # Incrémenter le compteur de votes du candidat
+            candidat = transaction.candidat
+            candidat.votes += nombre_votes
+            print(f"Votes après incrémentation : {candidat.votes}")
+            candidat.save()
+        
+        return Response(serializer.data)

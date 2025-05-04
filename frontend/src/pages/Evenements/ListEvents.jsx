@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 export default function ListEvents() {
   const [Events , setEvents] = useState([])
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -79,12 +80,15 @@ export default function ListEvents() {
   const handleCandidats = (eventId , eventNom) => {
     navigate(`/dashboard/event/${eventNom}/${eventId}/candidats`)
   }
+  const handleAddCandidat = (eventId , eventNom) => {
+    navigate(`/dashboard/event/${eventNom}/${eventId}/candidats/add`);
+}
   return (
     <section>
       <div className="mb-2 flex items-center justify-between space-y-2">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <div className="flex items-center space-x-2">
-          <Button asChild>
+          <Button asChild className={cn("rounded-xl cursor-pointer")} >
             <Link to="/dashboard/create-event">
               <Plus className="w-4 h-4 mr-2" />
               Créer un évènement
@@ -142,6 +146,7 @@ export default function ListEvents() {
                     prepareDelete={(e) => prepareDelete(e, event.id)}
                     handleEditEvent = {() => handleEdit(event.id)}
                     handleCandidats = {() => handleCandidats(event.id , event.nom)}
+                    handleAddCandidat = {() => handleAddCandidat(event.id , event.nom)}
                   />
                 ))
               )}

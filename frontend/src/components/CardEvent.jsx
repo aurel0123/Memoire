@@ -17,7 +17,8 @@ export default function CardEvent({
   photo,
   prepareDelete,
   handleEditEvent,
-  handleCandidats
+  handleCandidats , 
+  handleAddCandidat
 }) {
   const statusColors = {
     "en cours": "bg-green-500",
@@ -44,7 +45,7 @@ export default function CardEvent({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={handleAddCandidat}>
               <UserPlus size={16} /> Ajouter des candidats
             </DropdownMenuItem>
             <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onClick={handleCandidats}>
@@ -80,13 +81,13 @@ export default function CardEvent({
         </div>
         
         <div className="flex gap-2 mt-2">
-          <Button className="flex-1" size="sm" variant="default" onClick={handleCandidats}>
+          <Button className={cn("rounded-xl cursor-pointer flex-1")}  size="sm" variant="default" onClick={handleAddCandidat}>
             <UserPlus size={16} className="mr-2" /> Ajouter des candidats
           </Button>
           {/* <Button size="sm" variant="outline" onClick={handleEditEvent}>
             <Edit size={16} />
           </Button> */}
-          <Button size="sm" variant="outline" onClick={handleCandidats}>
+          <Button size="sm" variant="outline" onClick={handleCandidats} className={cn("rounded-xl cursor-pointer")}>
             <Eye size={16} />
           </Button>
         </div>
