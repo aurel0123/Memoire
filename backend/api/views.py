@@ -42,6 +42,60 @@ class SoutenanceViewSet(viewsets.ModelViewSet):
     queryset = Soutenance.objects.all()
     serializer_class = SoutenanceSerializer
 
+    def get_queryset(self):
+        # Optionnel: pour mettre à jour les statuts avant de retourner les données
+        queryset = super().get_queryset()
+        for soutenance in queryset:
+            soutenance.statut = soutenance.determiner_statut()
+            # Pas besoin de save() car c'est un champ calculé
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        # Fait une copie des données pour manipulation
+        data = request.data.copy()
+        
+        # Extrait les données des rôles du jury
+        jury_roles = data.pop('jury_roles', [])
+        
+        # Valide et crée la soutenance
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        
+        try:
+            self.perform_create(serializer, jury_roles)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer, jury_roles=None):
+        # Crée la soutenance
+        soutenance = serializer.save()
+        
+        # Crée les rôles du jury si fournis
+        if jury_roles:
+            self._create_jury_roles(soutenance, jury_roles)
+
+    def _create_jury_roles(self, soutenance, jury_roles):
+        # Validation des rôles
+        if len(jury_roles) != 3:
+            raise ValidationError("Le jury doit comporter exactement 3 membres")
+        
+        types = {role['type'] for role in jury_roles}
+        if len(types) != 3:
+            raise ValidationError("Les rôles doivent être uniques (PRES, RAPP, EXAM)")
+        
+        # Création des rôles
+        for role in jury_roles:
+            RoleJury.objects.create(
+                soutenance=soutenance,
+                enseignant_id=role['enseignant'],
+                type=role['type']
+            )
 class ProcesVerbalViewSet(viewsets.ModelViewSet):
     queryset = ProcesVerbal.objects.all()
     serializer_class = ProcesVerbalSerializer
@@ -581,7 +635,6 @@ class CandidatDetailView(generics.RetrieveAPIView):
         except Candidat.DoesNotExist:
             raise PermissionDenied("Candidat non trouvé dans cet événement.")
 
-
 @csrf_exempt
 def import_etudiants(request):
     if request.method == 'POST' and request.FILES.get('file'):
@@ -735,3 +788,24 @@ class UpdateTransactionView(generics.UpdateAPIView):
             candidat.save()
         
         return Response(serializer.data)
+    
+
+class UtilisateurViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    serializer_class = CustomUserSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user_type = self.request.query_params.get('type_user', None)
+        if user_type:
+            queryset = queryset.filter(type_user=user_type)
+        return queryset
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def approve(self, request, pk=None):
+        user = self.get_object()
+        user.is_approved = True
+        user.save()
+        return Response({'status': 'user approved'})
+    

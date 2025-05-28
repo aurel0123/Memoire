@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Enseignant, Etudiant, Filiere, Groupe, Monome, Binome, Soutenance, ProcesVerbal , Evenements , CustomUser , Candidat  , Transaction
+from .models import Enseignant, Etudiant, Filiere, Groupe, Monome, Binome, Soutenance, ProcesVerbal , Evenements , CustomUser , Candidat  , Transaction , RoleJury
 from rest_framework.exceptions import ValidationError
 class FiliereSerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,10 +27,38 @@ class GroupeSerializer(serializers.ModelSerializer):
         model = Groupe
         fields = '__all__'
 
+class RoleJurySerializer(serializers.ModelSerializer):
+    enseignant = EnseignantSerializer(read_only=True)
+    enseignant_id = serializers.PrimaryKeyRelatedField(
+        queryset=Enseignant.objects.all(), 
+        source='enseignant',
+        write_only=True
+    )
+
+    class Meta:
+        model = RoleJury
+        fields = ['id', 'type', 'enseignant', 'enseignant_id']
 class SoutenanceSerializer(serializers.ModelSerializer):
+    jury_roles = serializers.ListField(
+        child=serializers.DictField(),
+        write_only=True,
+        required=False
+    )
+    jury_members = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Soutenance
-        fields = '__all__'
+        fields = [
+            'id', 'date_soutenance', 'heure_soutenance', 'salle',
+            'statut', 'binome', 'monome','directeur' ,'jury_roles', 'jury_members'
+        ]
+        read_only_fields = ['statut']
+
+    def get_jury_members(self, obj):
+        roles = obj.jury_membres.all()
+        return RoleJurySerializer(roles, many=True).data
+    def get_statut(self, obj):
+        return obj.determiner_statut()
 
 class ProcesVerbalSerializer(serializers.ModelSerializer):
     class Meta:
@@ -105,7 +133,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         #fields = '__all__'  # Si vous voulez tous les champs  
-        fields = ['id', 'email', 'nom', 'prenom', 'is_approved', 'username' ,  'type_user']  # Liste des champs que vous voulez afficher
+        fields = ['id', 'email', 'nom', 'prenom', 'is_approved', 'username' ,  'type_user','phone', 'is_active']  # Liste des champs que vous voulez afficher
 
 
 class CandidatSerializer(serializers.ModelSerializer):

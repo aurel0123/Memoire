@@ -57,7 +57,7 @@ axios.interceptors.request.use(
 )
 
 // Intercepteur pour gérer les erreurs 401 et rafraîchir le token
-axios.interceptors.response.use(
+/* axios.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config
@@ -80,7 +80,34 @@ axios.interceptors.response.use(
         }
         return Promise.reject(error)
     }
-)
+) */
+
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const isProtectedRoute = window.location.pathname.startsWith('/dashboard');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/token/refresh/')) {
+      originalRequest._retry = true;
+
+      try {
+        const newAccessToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // Ne rediriger que si on est sur une route protégée
+        if (isProtectedRoute) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/connexion';
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null)
@@ -115,7 +142,7 @@ export const AuthProvider = ({ children }) => {
     }, [isTokenExpired])
 
     // Récupérer l'utilisateur connecté
-    const fetchUser = useCallback(async () => {
+    /* const fetchUser = useCallback(async () => {
         try {
             const token = localStorage.getItem('accessToken')
             if (!token || isTokenExpired(token)) {
@@ -137,7 +164,34 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoading(false)
         }
-    }, [isTokenExpired, isRefreshTokenExpired ,  navigate])
+    }, [isTokenExpired, isRefreshTokenExpired ,  navigate]) */
+
+    const fetchUser = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token || isTokenExpired(token)) {
+            if (isRefreshTokenExpired()) {
+                setUser(null);
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                // Ne rediriger que si on est sur une route protégée
+                if (window.location.pathname.startsWith('/dashboard')) {
+                navigate('/');
+                }
+                return;
+            }
+            await refreshAccessToken();
+            }
+
+            const response = await axios.get('/api/me/');
+            setUser(response.data);
+        } catch (error) {
+            console.log(error)
+            setUser(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [isTokenExpired, isRefreshTokenExpired, navigate]);
 
     // Connexion utilisateur
     const loginUser = async (credentials) => {
@@ -180,7 +234,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('accessToken')
             localStorage.removeItem('refreshToken')
             setUser(null)
-            navigate('/connexion')
+            navigate('/')
         }
     }
 

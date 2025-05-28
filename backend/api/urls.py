@@ -16,6 +16,8 @@ router.register(r'binomes', BinomeViewSet)
 router.register(r'monomes', MonomeViewSet)
 router.register(r'evenements' , EvenementsViewSet)
 router.register(r'evenements/(?P<evenement_id>\d+)/candidats', CandidatViewSet, basename='candidat')
+router.register(r'utilisateurs', UtilisateurViewSet, basename='utilisateur')
+router.register(r'soutenances', SoutenanceViewSet, basename='soutenance-candidat')
 
 urlpatterns = [
     path('api/', include(router.urls)),
@@ -26,7 +28,7 @@ urlpatterns = [
     path('inscription/', register_user, name='register'),
     path('connexion/', login_user, name='register'),
     path('refresh-token/', refresh_token, name='refresh-token'),
-     path('api/import-etudiants/', import_etudiants, name='import_etudiants'),
+    path('api/import-etudiants/', import_etudiants, name='import_etudiants'),
     path('evenements/<int:evenement_id>/candidats/<int:pk>/', CandidatDetailView.as_view(), name='candidat_detail'),
     path(
         'api/evenements/<int:evenement_id>/candidats/<int:candidat_id>/details/transactions/',

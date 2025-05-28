@@ -12,6 +12,9 @@ class Command(BaseCommand):
                 'delete_evenements',
                 'view_evenements',
             ],
+            'responsable' : [
+                'add_filiere'
+            ],
             'admin': [
                 'all'
             ]

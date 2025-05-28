@@ -121,6 +121,19 @@
   .gradiant-color {
     @apply bg-gradient-to-t from-[#223DB7] to-[#3D61FF] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300
   }
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-white/20 dark:border-gray-700/30 shadow-lg;
+  }
+  
+  /* Styles pour les cartes avec un dégradé subtil */
+  .gradient-card {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100/70 dark:from-blue-900/30 dark:to-blue-800/20;
+  }
+  
+  /* Effet de hover sur les cartes */
+  .hover-lift {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
 }
 
 :root {
@@ -144,6 +157,7 @@
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }/* Mode clair */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -173,3 +187,4 @@ input[type="search"]::-webkit-search-cancel-button {
   appearance: none;
   display: none;
 }
+

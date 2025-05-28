@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models , transaction
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group
 from django.utils import timezone
 from django.core.validators import RegexValidator
@@ -14,7 +14,8 @@ from django.conf import settings
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from django.utils import timezone
+from datetime import datetime, time, timedelta
+
 
 class LowercaseEmailField(models.EmailField):
     """
@@ -47,10 +48,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     class Types(models.TextChoices):
         ADMIN = 'admin', 'Administrateur'
-        RESPONSABLE = 'responsable', 'Responsable'
-        ORGANISATION = 'organisation', 'ORGANISATION'
+        RESPONSABLE = 'responsable', 'RESPONSABLE'
+        ORGANISATEUR = 'organisateur', 'ORGANISATEUR'
+        SURVEILLANT = 'surveillant' , 'SURVEILLANT'
 
-    default_type = Types.ORGANISATION
+    default_type = Types.ORGANISATEUR
     # Réduire la longueur du champ
     type_user = models.CharField(_("Type d'utilisateur"), max_length=50, choices=Types.choices, default=default_type)
     is_approved = models.BooleanField(default=False)
@@ -66,19 +68,28 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         is_new = not self.pk
         # Sauvegarde initiale pour obtenir un ID
         super().save(*args, **kwargs)
-       
         # Si utilisateur est un personnel approuvé et n’a pas encore de mot de passe
-        if self.type_user == self.Types.ORGANISATION and self.is_approved and not self.has_usable_password():
+        if self.type_user == self.Types.ORGANISATEUR and self.is_approved and not self.has_usable_password():
             password = self.generate_random_password()
             self.set_password(password)
             self.send_approval_email(password)
             super().save(*args, **kwargs)
 
-        if self.type_user == CustomUser.Types.ORGANISATION:
-            group_name = 'organisation'
+        if self.type_user == self.Types.RESPONSABLE and self.is_approved and not self.has_usable_password():
+            password = self.generate_random_password()
+            self.set_password(password)
+            self.send_approval_email(password)
+            super().save(*args, **kwargs)
 
+        if self.type_user == CustomUser.Types.ORGANISATEUR:
+            group_name = 'organisation'
+        elif self.type_user == CustomUser.Types.RESPONSABLE:
+            group_name = 'responsable'
         elif self.type_user == CustomUser.Types.ADMIN:
             group_name = 'admin'
+        else:
+            group_name = 'default'  # Valeur par défaut ou gérez ce cas différemment
+
         
         # Récupérer ou créer le groupe correspondant
         group, created = Group.objects.get_or_create(name=group_name)
@@ -86,8 +97,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         # Ajouter l'instance au groupe si elle n'y est pas déjà
         if not self.groups.filter(name=group.name).exists():
             self.groups.add(group)
-       
-
+            
     def generate_random_password(self) :
         length = 12
         characters = string.ascii_letters + string.digits + string.punctuation
@@ -236,29 +246,12 @@ class Groupe(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Le type de groupe sera défini dans les sous-classes
+        
+        super().save(update_fields=['type_groupe'])  # mise à jour uniquement du champ concerné
+            # Le type de groupe sera défini dans les sous-classes
     
     def get_type_groupe(self):
         return self.type_groupe
-    
-""" class Binome(models.Model):
-    etudiant1 = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name='binome_etudiant1')
-    etudiant2 = models.ForeignKey(Etudiant, on_delete=models.CASCADE, related_name='binome_etudiant2')
-    maitre_memoire = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='binomes_encadres')
-    theme = models.CharField(max_length=200)
-
-    def __str__(self):
-        return f"Binôme {self.etudiant1} et {self.etudiant2}"
-
-    def clean(self):
-        # Vérifier que les deux étudiants sont en Licence 3
-        if not self.etudiant1.est_en_licence() or not self.etudiant2.est_en_licence():
-            raise ValidationError(_("Les deux étudiants doivent être en Licence 3."))
-        
-        # Vérifier que les deux étudiants sont différents
-        if self.etudiant1 == self.etudiant2:
-            raise ValidationError(_("Un binôme doit être composé de deux étudiants différents."))
-         """
 
 class Binome(models.Model):
     PROGRAMMATION = [
@@ -369,63 +362,146 @@ class RoleJury(models.Model):
     ]
     
     type = models.CharField(max_length=4, choices=TYPES_ROLE)
-    enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='roles')
-    soutenance = models.ForeignKey('Soutenance', on_delete=models.CASCADE, related_name='roles_jury')
-    
+    enseignant = models.ForeignKey(Enseignant, on_delete=models.CASCADE, related_name='roles_jury')
+    soutenance = models.ForeignKey('Soutenance', on_delete=models.CASCADE, related_name='jury_membres')
     class Meta:
         unique_together = ('enseignant', 'soutenance')
-    
-    def _str_(self):
+        
+    def __str__(self):
         return f"{self.get_type_display()} - {self.enseignant}"
-    
-    def affecter_role(self, nouveau_type):
-        self.type = nouveau_type
-        self.save()
 
 class Soutenance(models.Model):
+    STATUT_CHOICES = [
+        ('planifie', 'Planifié'),
+        ('en_cours', 'En cours'),
+        ('termine', 'Terminé'),
+        ('reporte', 'Reporté'),
+    ]
+    
     id = models.AutoField(primary_key=True)
     date_soutenance = models.DateField()
     heure_soutenance = models.TimeField()
     salle = models.CharField(max_length=50)
-    resultat = models.CharField(max_length=100, blank=True, null=True)
-    mention = models.CharField(max_length=100, blank=True, null=True)
-    observations = models.TextField(blank=True)
-    groupe = models.OneToOneField(Groupe, on_delete=models.CASCADE, related_name='soutenance')
-    membres_jury = models.ManyToManyField(Enseignant, through=RoleJury, related_name='soutenances')
-    
-    def _str_(self):
+    binome = models.ForeignKey('Binome', on_delete=models.CASCADE, null=True, blank=True, related_name='soutenances')
+    monome = models.ForeignKey('Monome', on_delete=models.CASCADE, null=True, blank=True, related_name='soutenances')
+    directeur = models.CharField(max_length=100, blank=True, null=True)  # Avant: 'max_length=100,
+    jury = models.ManyToManyField('Enseignant', through='RoleJury', related_name='soutenances_jury')
+    statut = models.CharField(
+        max_length=10,
+        choices=STATUT_CHOICES,
+        default='planifie',
+        editable=False
+    )
+
+    def __str__(self):
         return f"Soutenance du {self.date_soutenance} à {self.heure_soutenance} en {self.salle}"
     
     def clean(self):
-        # Vérifier que le jury compte exactement 3 membres
-        if self.membres_jury.count() != 3:
-            raise ValidationError(_("Une soutenance doit avoir exactement 3 membres dans le jury."))
+        """Validation supplémentaire lors des sauvegardes normales"""
+        super().clean()
         
-        # Vérifier que le maître de mémoire fait partie du jury
-        for etudiant in self.groupe.etudiants.all():
-            if etudiant.maitre_memoire not in self.membres_jury.all():
-                raise ValidationError(_("Le maître de mémoire doit faire partie du jury."))
-    
-    def planifier_soutenance(self, date, heure, salle):
-        self.date_soutenance = date
-        self.heure_soutenance = heure
-        self.salle = salle
-        self.save()
-    
-    def enregistrer_resultat(self, resultat, mention, observations=''):
-        self.resultat = resultat
-        self.mention = mention
-        self.observations = observations
-        self.save()
+        if not self.pk:  # Skip pour les nouvelles instances
+            return
+            
+        # Vérification via le modèle through
+        if self.rolejury_set.count() != 3:
+            raise ValidationError("Le jury doit comporter exactement 3 membres")
         
-        # Mettre à jour les PV des étudiants
-        for etudiant in self.groupe.etudiants.all():
-            try:
-                pv = ProcesVerbal.objects.get(etudiant=etudiant)
-                pv.est_valide = True
-                pv.save()
-            except ProcesVerbal.DoesNotExist:
-                pass
+        # Vérification maître de mémoire
+        maitre = self.binome.maitre_memoire if self.binome else \
+                (self.monome.maitre_memoire if self.monome else None)
+        
+        if maitre and not self.jury.filter(pk=maitre.pk).exists():
+            raise ValidationError("Le maître de mémoire doit faire partie du jury")
+
+    @classmethod
+    def create_with_jury(cls, date, heure, salle, binome=None, monome=None, jury_members=None , directeur=None):
+        """
+        Crée une soutenance avec son jury en une seule opération atomique
+        """
+        with transaction.atomic():
+            # Validation
+            if not (binome or monome) or (binome and monome):
+                raise ValidationError("Une soutenance doit avoir soit un binôme, soit un monôme")
+                
+            if not jury_members or len(jury_members) != 3:
+                raise ValidationError("Exactement 3 membres de jury requis")
+            
+            # Vérification maître de mémoire
+            maitre = binome.maitre_memoire if binome else monome.maitre_memoire
+            enseignants = {m['enseignant'] for m in jury_members}
+            
+            if maitre and maitre not in enseignants:
+                raise ValidationError(f"Le maître de mémoire {maitre} doit faire partie du jury")
+            
+            # Vérification rôles uniques
+            if len({m['type'] for m in jury_members}) != 3:
+                raise ValidationError("Les rôles du jury doivent être uniques (PRES, RAPP, EXAM)")
+            
+            # Création et validation
+            soutenance = cls(
+                date_soutenance=date,
+                heure_soutenance=heure,
+                salle=salle,
+                binome=binome,
+                monome=monome , 
+                directeur=directeur
+            )
+            soutenance.full_clean()
+            soutenance.save()
+            
+            # Création des rôles
+            RoleJury.objects.bulk_create([
+                RoleJury(
+                    soutenance=soutenance,
+                    enseignant=member['enseignant'],
+                    type=member['type']
+                ) for member in jury_members
+            ])
+            
+            return soutenance
+
+    def determiner_statut(self):
+        """Détermine le statut basé sur la date/heure"""
+        if hasattr(self, '_force_report'):
+            return 'reporte'
+            
+        now = timezone.now()  # Utilisez timezone.now() au lieu de datetime.now()
+        dt_soutenance = timezone.make_aware(datetime.combine(
+            self.date_soutenance, 
+            self.heure_soutenance
+        ))
+        
+        # Définition des marges temporelles
+        marge_avant = timedelta(minutes=30)  # 1min avant le début pour préparation
+        duree_soutenance = timedelta(hours=1)  # Durée estimée de la soutenance
+        
+        if now < dt_soutenance - marge_avant :
+            return 'planifie'
+        elif dt_soutenance - marge_avant <= now <= dt_soutenance + duree_soutenance:
+            return 'en_cours'
+        return 'termine'
+    
+        
+    
+
+    def save(self, *args, **kwargs):
+        """Surcharge de la sauvegarde avec gestion du statut"""
+        self.full_clean()
+        
+        if not self.pk or any(f in kwargs.get('update_fields', []) 
+                        for f in ['date_soutenance', 'heure_soutenance']):
+            self.statut = self.determiner_statut()
+            
+        super().save(*args, **kwargs)
+    
+    def reporter(self, new_date, new_time):
+        """Reporte la soutenance avec nouvelles date/heure"""
+        self.date_soutenance = new_date
+        self.heure_soutenance = new_time
+        self._force_report = True
+        self.save(update_fields=['date_soutenance', 'heure_soutenance', 'statut'])
+        delattr(self, '_force_report')
 
 class ProcesVerbal(models.Model):
     numero_pv = models.CharField(max_length=50, primary_key=True)
@@ -497,7 +573,7 @@ class Evenements (models.Model) :
         """Retourne le nombre de votants restants pour l'événement"""
         return self.max_votants - self.total_votants()
 
-    def get_status(self):
+    def get_status(self): 
         """Retourne l'état actuel de l'événement basé sur la date"""
         now = timezone.now()
         if now < self.date_debut:
@@ -525,12 +601,13 @@ class Candidat(models.Model):
     def __str__(self):
         return f"{self.nom} {self.prenom} - {self.evenement.nom}"
 
-    def pourcentage_votes(self):
+    def pourcentage_votes(self): 
         total_votes = sum([c.votes for c in self.evenement.candidats.all()])
         if total_votes == 0:
             return 0
+        
         return (self.votes / total_votes) * 100
-
+    
     def total_votes(self):
         """Retourne le nombre de votes pour ce candidat"""
         return self.transactions.count()

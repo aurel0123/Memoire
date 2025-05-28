@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogFooter, 
 import {Link} from 'react-router-dom'
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import FeatureColumn from './FeatureColumn'
 
 export default function Inscription() {
     const logo = {
@@ -60,21 +61,12 @@ export default function Inscription() {
     }
     console.log()
   return (
-    <div className='h-svh'>
+    <div className='flex h-screen w-full bg-slate-50'>
         <Toaster position="top-center" richColors closeButton />
-        <div className='container h-full flex flex-col py-4'>
-            <div className='w-full pl-11 lg:pl-2'>
-                <a href={logo.url} className="flex items-center gap-2">
-                    <logo.icon size={30} className="max-h-10 text-blue-900" />
-                    <span className="text-lg font-semibold tracking-tighter">
-                        {logo.title}
-                    </span>
-                </a>
-            </div>
-            <div className='flex items-center justify-center h-full'>
+            <FeatureColumn />
+            <div className="flex w-1/2 items-center justify-center p-8">
                <RegisterForm handlechange={handlechange} handleSubmit={handleSubmit}/>
             </div>
-        </div>
         {open && <AlertMessage />}
     </div>
   )

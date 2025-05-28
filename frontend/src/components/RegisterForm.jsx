@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Link } from "react-router-dom"
+import PropTypes from 'prop-types'
 
 export default function RegisterForm({
   className,handlechange,handleSubmit,
@@ -19,7 +20,7 @@ export default function RegisterForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">S'enregistrer</CardTitle>
+          <CardTitle className="text-2xl">S&apos;enregistrer</CardTitle>
           <CardDescription>
             Entrer vos informatiosn pour vous enregistrez
           </CardDescription>
@@ -64,7 +65,7 @@ export default function RegisterForm({
                 />
               </div>
               <Button type="submit" className="w-full">
-                S'enregistrer
+                S&apos;enregistrer
               </Button>
               
             </div>
@@ -79,4 +80,9 @@ export default function RegisterForm({
       </Card>
     </div>
   )
+}
+RegisterForm.propTypes = {
+  className: PropTypes.string,
+  handlechange: PropTypes.func,
+  handleSubmit: PropTypes.func,
 }

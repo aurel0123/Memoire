@@ -5,19 +5,6 @@ const api = axios.create({
   baseURL: 'http://127.0.0.1:8000/api/'
 });
 
-// Intercepteur pour ajouter le token d'authentification
-axios.interceptors.request.use(
-  (config) => {
-      const token = localStorage.getItem('accessToken')
-      if (token) {
-          config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-  },
-  (error) => {
-      return Promise.reject(error)
-  }
-)
 
 // Fonctions de service
 export const services = {
@@ -55,7 +42,7 @@ export const services = {
   delete: async (endpoint) => {
     try {
       const response = await api.delete(endpoint);
-      return response.data;
+      return response;
     } catch (error) {
       throw handleError(error);
     }

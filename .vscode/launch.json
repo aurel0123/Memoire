@@ -28,9 +28,6 @@
             "request": "launch",
             "type": "node-terminal"
         },
-
-        
-
         {
             "name": "Python Debugger: Django",
             "type": "debugpy",

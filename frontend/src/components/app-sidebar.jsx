@@ -1,16 +1,14 @@
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Command,
-  Frame,
   GalleryVerticalEnd,
-  Map,
   PieChart,
   Settings2,
   CalendarFold, 
   User,
-  UsersRound
+  UsersRound , 
+  FolderTree,
+  BookMarked
 } from "lucide-react"
 import { NavMain } from "@/components/nav-main"
 import { TeamSwitcher } from "@/components/team-switcher"
@@ -46,19 +44,9 @@ const data = {
       isActive: true,
     },
     {
-      title: "Calendrier",
-      url: "calendrier",
+      title: "Attribution Salle",
+      url: "planificationSalle",
       icon: CalendarFold,
-    },
-    {
-      title: "Salles",
-      url: "salle",
-      icon: Map,
-    },
-    {
-      title: "Réservations",
-      url: "reservation",
-      icon: BookOpen,
     },
     {
       title: "Filières",
@@ -90,7 +78,18 @@ const data = {
 
       
     },
-    
+    {
+      title: "Procès-verbaux",
+      url: "pv",
+      icon: FolderTree,
+      isActive: false,
+    },  
+    {
+      title: "Soutenances",
+      url: "soutenance",
+      icon: BookMarked,
+      isActive: false,
+    },  
   ],
   navEvents: [
     {

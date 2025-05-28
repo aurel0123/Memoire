@@ -220,8 +220,8 @@ export default function Filiere() {
     <>
       <Toaster richColors position="top-right" />
       <div className="mb-2 space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Filière</h1>
-        <span className="text-sm font-normal">
+        <h1 className="text-2xl font-bold tracking-tight text-coloor-text">Filière</h1>
+        <span className="text-muted-foreground mt-1">
           Gérer vos listes de filières
         </span>
       </div>
