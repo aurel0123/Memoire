@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
@@ -37,24 +37,25 @@ export default function BinomesList() {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBinomes = async () => {
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/api/binomes/?filiere=${filiereId}`);
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        const data = await response.json();
-        setBinomes(data);
-      } catch (err) {
-        setError(`Erreur lors de la récupération des binômes: ${err.message}`);
-        toast.error("Erreur", {
-          description: `Impossible de charger les binômes: ${err.message}`,
-        });
-      } finally {
-        setLoading(false);
+  const fetchBinomes = async () => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/binomes/?filiere=${filiereId}`);
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
       }
-    };
+      const data = await response.json();
+      setBinomes(data);
+    } catch (err) {
+      setError(`Erreur lors de la récupération des binômes: ${err.message}`);
+      toast.error("Erreur", {
+        description: `Impossible de charger les binômes: ${err.message}`,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    
 
     const fetchEtudiants = async () => {
       try {

@@ -5,14 +5,12 @@ import { Calendar, Clock, Edit, Eye, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-import { useRef } from 'react';
 
 export default function SoutenanceTable({
   soutenances ,
   onEdit , 
-  onDelete
+  onDelete , tableRef
 }) {
-  const tableRef = useRef();
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('fr-FR');
   };
@@ -191,5 +189,5 @@ export default function SoutenanceTable({
 SoutenanceTable.propTypes = {
   soutenances: PropTypes.array.isRequired , 
   onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired
+  onDelete: PropTypes.func.isRequired , 
 }

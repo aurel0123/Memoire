@@ -231,7 +231,7 @@ export default function Index() {
 
   const filteredSoutenances = applyFilters(soutenances);
 
-  console.log("id" , isDeleteDialogOpen);
+  console.log("id" , soutenances);
   return (
     <div className="space-y-6">
       <Toaster richColors position="top-right" />
@@ -246,13 +246,12 @@ export default function Index() {
         setFilters={setFilters}
         filters={filters}
       />
-      <div ref={tableRef}>
-        <SoutenanceTable 
-          soutenances={filteredSoutenances} 
-          onEdit={(id) => console.log('Edit soutenance:', id)}
-          onDelete={prepareDelete}
-        />
-      </div>
+      <SoutenanceTable 
+        soutenances={filteredSoutenances} 
+        onEdit={(id) => console.log('Edit soutenance:', id)}
+        onDelete={prepareDelete}
+        tableRef={tableRef}
+      />
       <DeleteDialog 
         open = {isDeleteDialogOpen}
         onOpenChange = {setisDeleteDialogOpen}

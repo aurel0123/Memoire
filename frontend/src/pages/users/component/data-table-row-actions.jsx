@@ -1,6 +1,5 @@
 import { DotsHorizontalIcon } from '@radix-ui/react-icons'
 //import { Row } from '@tanstack/react-table'
-import { IconEdit, IconTrash } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -12,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useUsers } from '../context/user-context'
 import PropTypes from 'prop-types'
+import { Edit, Trash2 } from 'lucide-react'
 
 export function DataTableRowActions({ row }) {
   const { setOpen, setCurrentRow } = useUsers()
@@ -36,7 +36,7 @@ export function DataTableRowActions({ row }) {
           >
             Edit
             <DropdownMenuShortcut>
-              <IconEdit size={16} />
+              <Edit size={16} />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -49,7 +49,7 @@ export function DataTableRowActions({ row }) {
           >
             Delete
             <DropdownMenuShortcut>
-              <IconTrash size={16} />
+              <Trash2 size={16} />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>

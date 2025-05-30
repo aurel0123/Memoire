@@ -7,10 +7,10 @@ import Etudiantlicence from '@/pages/Etudiants_filiere/etudiantsl'
 import ListeEtu from '@/pages/listeetu'
 import FilieresList from "@/pages/FilieresList"
 import BinomesList from "@/pages/BinomesList"
-import GestBinome from '@/pages/GestBinome'
+import GestBinome from '@/pages/Binome_Monme/GestBinome'
 import Planning from '@/pages/Planning'
 import FormsPlanning from '@/pages/sotenance/composants/FormsPlanning'
-import ListEtudiant from '@/pages/ListEtudiant'
+import ListEtudiant from '@/pages/Binome_Monme/ListEtudiant'
 import HomeEvents from '@/layouts/AppEvents/HomeEvents'
 import Inscription from '@/pages/Authentication_and_Register/Inscription'
 import Connexion from '@/pages/Authentication_and_Register/Connexion'
