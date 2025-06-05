@@ -412,7 +412,11 @@ export default function GestBinome() {
                 <Button variant='outline' onClick={handleGoback}>Retour</Button>
             </div>
             <div className="mb-2 space-y-1">
-                <h1 className="text-2xl font-bold tracking-tight">Gestion des Binomes</h1>
+                <h1 className="text-2xl font-bold tracking-tight">
+                    {
+                        filieres?.niveau == "L3" ? "Gestion des Binômes" : "Gestion des Monomes"
+                    }
+                </h1>
                 <span className="text-sm font-normal">
                     Filière sélectionnée : {filieres?.code}
                 </span>

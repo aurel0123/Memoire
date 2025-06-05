@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useUsers } from '../context/user-context'
 import PropTypes from 'prop-types'
-import { Edit, Trash2 } from 'lucide-react'
+import { Check, Edit, Trash2 } from 'lucide-react'
 
 export function DataTableRowActions({ row }) {
   const { setOpen, setCurrentRow } = useUsers()
@@ -37,6 +37,17 @@ export function DataTableRowActions({ row }) {
             Edit
             <DropdownMenuShortcut>
               <Edit size={16} />
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setCurrentRow(row.original)
+              setOpen('approve')
+            }}
+          >
+            Approuver
+            <DropdownMenuShortcut>
+              <Check size={16} />
             </DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

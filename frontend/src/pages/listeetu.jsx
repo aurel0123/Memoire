@@ -48,6 +48,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import SearchInfo from "@/components/SearchInfo";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
 
 export default function ListeEtu() {
@@ -95,6 +105,10 @@ export default function ListeEtu() {
   });
   const [file , setFile] = useState(null);
   const navigate = useNavigate();
+
+  // État pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const handleUpload = async () => {
     if (!file) return;
@@ -419,6 +433,53 @@ export default function ListeEtu() {
       reader.onerror = (error) => reject(error);
       reader.readAsArrayBuffer(file);
     });
+  };
+
+  // Calculer les étudiants pour la page courante
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = etudiants.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(etudiants.length / itemsPerPage);
+
+  // Gérer le changement de page
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Générer les numéros de page à afficher
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
   };
 
   console.log(newEtudiant);
@@ -820,180 +881,205 @@ export default function ListeEtu() {
       ) : error ? (
         <div className="flex justify-center py-8 text-red-500">{error}</div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Matricule</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Prénom</TableHead>
-              <TableHead>Date de naissance</TableHead>
-              <TableHead>Lieu de naissance</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {etudiants.length === 0 ? (
+        <>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  Aucun étudiant trouvé pour cette filière.
-                </TableCell>
+                <TableHead>Matricule</TableHead>
+                <TableHead>Nom</TableHead>
+                <TableHead>Prénom</TableHead>
+                <TableHead>Date de naissance</TableHead>
+                <TableHead>Lieu de naissance</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ) : (
-              etudiants.map((etudiant) => (
-                <TableRow key={etudiant.matricule}>
-                  <TableCell>{etudiant.matricule}</TableCell>
-                  <TableCell>{etudiant.nom}</TableCell>
-                  <TableCell>{etudiant.prenom}</TableCell>
-                  <TableCell>{etudiant.date_naissance}</TableCell>
-                  <TableCell>{etudiant.lieu_naissance}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Sheet
-                        open={
-                          isEditSheetOpen && editEtudiant.id === etudiant.id
-                        }
-                        onOpenChange={(open) => {
-                          if (!open)
-                            setEditEtudiant({
-                              id: null,
-                              matricule: "",
-                              nom: "",
-                              prenom: "",
-                              date_naissance: "",
-                              lieu_naissance: "",
-                              filiere: filiereId,
-                            });
-                          setIsEditSheetOpen(open);
-                        }}
-                      >
-                        <SheetTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0"
-                            type="button"
-                            onClick={() => prepareEdit(etudiant)}
-                          >
-                            <Pencil className="h-4 w-4 text-blue-500" />
-                          </Button>
-                        </SheetTrigger>
-                        <SheetContent>
-                          <form onSubmit={handleEditEtudiant}>
-                            <SheetHeader className="border-b bg-muted">
-                              <SheetTitle>Modifier l'étudiant</SheetTitle>
-                            </SheetHeader>
-                            <div className="grid gap-6 p-4">
-                              <div className="grid items-center gap-3">
-                                <Label
-                                  htmlFor="edit-matricule"
-                                  className="text-right"
-                                >
-                                  Matricule
-                                </Label>
-                                <Input
-                                  id="edit-matricule"
-                                  value={editEtudiant.matricule}
-                                  onChange={(e) =>
-                                    setEditEtudiant({
-                                      ...editEtudiant,
-                                      matricule: e.target.value,
-                                    })
-                                  }
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid items-center gap-3">
-                                <Label htmlFor="edit-nom" className="text-right">
-                                  Nom
-                                </Label>
-                                <Input
-                                  id="edit-nom"
-                                  value={editEtudiant.nom}
-                                  onChange={(e) =>
-                                    setEditEtudiant({...editEtudiant,nom: e.target.value,})}
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid items-center gap-3">
-                                <Label
-                                  htmlFor="edit-prenom"
-                                  className="text-right"
-                                >
-                                  Prénom
-                                </Label>
-                                <Input
-                                  id="edit-prenom"
-                                  value={editEtudiant.prenom}
-                                  onChange={(e) =>
-                                    setEditEtudiant({
-                                      ...editEtudiant,
-                                      prenom: e.target.value,
-                                    })
-                                  }
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid items-center gap-3">
-                                <Label
-                                  htmlFor="edit-date_naissance"
-                                  className="text-right"
-                                >
-                                  Date de naissance
-                                </Label>
-                                <Input
-                                  id="edit-date_naissance"
-                                  type="date"
-                                  value={editEtudiant.date_naissance}
-                                  onChange={(e) =>
-                                    setEditEtudiant({
-                                      ...editEtudiant,
-                                      date_naissance: e.target.value,
-                                    })
-                                  }
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid items-center gap-3">
-                                <Label
-                                  htmlFor="edit-lieu_naissance"
-                                  className="text-right"
-                                >
-                                  Lieu de naissance
-                                </Label>
-                                <Input
-                                  id="edit-lieu_naissance"
-                                  value={editEtudiant.lieu_naissance}
-                                  onChange={(e) =>
-                                    setEditEtudiant({
-                                      ...editEtudiant,
-                                      lieu_naissance: e.target.value,
-                                    })
-                                  }
-                                  className="col-span-3"
-                                />
-                              </div>
-                            </div>
-                            <SheetFooter>
-                              <Button type="submit">Enregistrer</Button>
-                            </SheetFooter>
-                          </form>
-                        </SheetContent>
-                      </Sheet>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 p-0"
-                        onClick={() => prepareDelete(etudiant.matricule)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {currentItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8">
+                    Aucun étudiant trouvé pour cette filière.
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                currentItems.map((etudiant) => (
+                  <TableRow key={etudiant.matricule}>
+                    <TableCell>{etudiant.matricule}</TableCell>
+                    <TableCell>{etudiant.nom}</TableCell>
+                    <TableCell>{etudiant.prenom}</TableCell>
+                    <TableCell>{etudiant.date_naissance}</TableCell>
+                    <TableCell>{etudiant.lieu_naissance}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Sheet
+                          open={isEditSheetOpen && editEtudiant.id === etudiant.id}
+                          onOpenChange={(open) => {
+                            if (!open)
+                              setEditEtudiant({
+                                id: null,
+                                matricule: "",
+                                nom: "",
+                                prenom: "",
+                                date_naissance: "",
+                                lieu_naissance: "",
+                                filiere: filiereId,
+                              });
+                            setIsEditSheetOpen(open);
+                          }}
+                        >
+                          <SheetTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 p-0"
+                              type="button"
+                              onClick={() => prepareEdit(etudiant)}
+                            >
+                              <Pencil className="h-4 w-4 text-blue-500" />
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent>
+                            <form onSubmit={handleEditEtudiant}>
+                              <SheetHeader className="border-b bg-muted">
+                                <SheetTitle>Modifier l'étudiant</SheetTitle>
+                              </SheetHeader>
+                              <div className="grid gap-6 p-4">
+                                <div className="grid items-center gap-3">
+                                  <Label htmlFor="edit-matricule" className="text-right">
+                                    Matricule
+                                  </Label>
+                                  <Input
+                                    id="edit-matricule"
+                                    value={editEtudiant.matricule}
+                                    onChange={(e) =>
+                                      setEditEtudiant({
+                                        ...editEtudiant,
+                                        matricule: e.target.value,
+                                      })
+                                    }
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid items-center gap-3">
+                                  <Label htmlFor="edit-nom" className="text-right">
+                                    Nom
+                                  </Label>
+                                  <Input
+                                    id="edit-nom"
+                                    value={editEtudiant.nom}
+                                    onChange={(e) =>
+                                      setEditEtudiant({...editEtudiant, nom: e.target.value})}
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid items-center gap-3">
+                                  <Label htmlFor="edit-prenom" className="text-right">
+                                    Prénom
+                                  </Label>
+                                  <Input
+                                    id="edit-prenom"
+                                    value={editEtudiant.prenom}
+                                    onChange={(e) =>
+                                      setEditEtudiant({
+                                        ...editEtudiant,
+                                        prenom: e.target.value,
+                                      })
+                                    }
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid items-center gap-3">
+                                  <Label htmlFor="edit-date_naissance" className="text-right">
+                                    Date de naissance
+                                  </Label>
+                                  <Input
+                                    id="edit-date_naissance"
+                                    type="date"
+                                    value={editEtudiant.date_naissance}
+                                    onChange={(e) =>
+                                      setEditEtudiant({
+                                        ...editEtudiant,
+                                        date_naissance: e.target.value,
+                                      })
+                                    }
+                                    className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid items-center gap-3">
+                                  <Label htmlFor="edit-lieu_naissance" className="text-right">
+                                    Lieu de naissance
+                                  </Label>
+                                  <Input
+                                    id="edit-lieu_naissance"
+                                    value={editEtudiant.lieu_naissance}
+                                    onChange={(e) =>
+                                      setEditEtudiant({
+                                        ...editEtudiant,
+                                        lieu_naissance: e.target.value,
+                                      })
+                                    }
+                                    className="col-span-3"
+                                  />
+                                </div>
+                              </div>
+                              <SheetFooter>
+                                <Button type="submit">Enregistrer</Button>
+                              </SheetFooter>
+                            </form>
+                          </SheetContent>
+                        </Sheet>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 p-0"
+                          onClick={() => prepareDelete(etudiant.matricule)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                    />
+                  </PaginationItem>
+                  
+                  {getPageNumbers().map((pageNumber, index) => (
+                    <PaginationItem key={index}>
+                      {pageNumber === '...' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={() => handlePageChange(pageNumber)}
+                          isActive={currentPage === pageNumber}
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
       )}
 
       <AlertDialog

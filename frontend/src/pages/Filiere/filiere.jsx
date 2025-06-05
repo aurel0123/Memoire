@@ -18,6 +18,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
 import { Plus, Pencil, Trash2, AlertCircle} from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
@@ -51,6 +60,10 @@ export default function Filiere() {
   const [filiereToDelete, setFiliereToDelete] = useState(null);
   const [isAddSheetOpen, setIsAddSheetOpen] = useState(false);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  
+  // État pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Récupérer les filières depuis l'API
   const fetchFilieres = async () => {
@@ -216,6 +229,53 @@ export default function Filiere() {
       filiere.libelle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Calculer les filières pour la page courante
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredFilieres.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredFilieres.length / itemsPerPage);
+
+  // Gérer le changement de page
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Générer les numéros de page à afficher
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
+
   return (
     <>
       <Toaster richColors position="top-right" />
@@ -304,115 +364,155 @@ export default function Filiere() {
               {error}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-2/5">Code</TableHead>
-                  <TableHead className="w-2/5">Libellé</TableHead>
-                  <TableHead className="w-1/5">Niveau</TableHead>
-                  <TableHead className="w-1/5">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFilieres.length === 0 ? (
+            <>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8">
-                      Aucune filière trouvée
-                    </TableCell>
+                    <TableHead className="w-2/5">Code</TableHead>
+                    <TableHead className="w-2/5">Libellé</TableHead>
+                    <TableHead className="w-1/5">Niveau</TableHead>
+                    <TableHead className="w-1/5">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  filteredFilieres.map((filiere) => (
-                    <TableRow key={filiere.id}>
-                      <TableCell className="w-2/5">{filiere.code}</TableCell>
-                      <TableCell className="w-2/5">{filiere.libelle}</TableCell>
-                      <TableCell className="w-1/5">
-                        {filiere.niveau === "L3" ? "Licence 3" : "Master 2"}
-                      </TableCell>
-                      <TableCell className="w-1/5">
-                        <div className="flex gap-2">
-                          <Sheet open={isEditSheetOpen && editFiliere.id === filiere.id} onOpenChange={(open) => {
-                            if (!open) setEditFiliere({ id: null, code: "", libelle: "", niveau: "L3" });
-                            setIsEditSheetOpen(open);
-                          }}>
-                            <SheetTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 p-0"
-                                type="button"
-                                onClick={(e) => prepareEdit(filiere, e)}
-                              >
-                                <Pencil className="h-4 w-4 text-blue-500" />
-                              </Button>
-                            </SheetTrigger>
-                            <SheetContent>
-                              <form onSubmit={handleEditFiliere}>
-                                <SheetHeader className="border-b bg-muted">
-                                  <SheetTitle>Modifier la filière</SheetTitle>
-                                </SheetHeader>
-                                <div className="grid gap-6 p-4">
-                                  <div className="grid items-center gap-3">
-                                    <Label htmlFor="edit-code" className="text-right">
-                                      Code
-                                    </Label>
-                                    <Input
-                                      id="edit-code"
-                                      value={editFiliere.code}
-                                      onChange={(e) => setEditFiliere({...editFiliere, code: e.target.value})}
-                                      className="col-span-3"
-                                    />
-                                  </div>
-                                  <div className="grid items-center gap-3">
-                                    <Label htmlFor="edit-libelle" className="text-right">
-                                      Libellé
-                                    </Label>
-                                    <Input
-                                      id="edit-libelle"
-                                      value={editFiliere.libelle}
-                                      onChange={(e) => setEditFiliere({...editFiliere, libelle: e.target.value})}
-                                      className="col-span-3"
-                                    />
-                                  </div>
-                                  <div className="grid items-center gap-3">
-                                    <Label htmlFor="edit-niveau" className="text-right">
-                                      Niveau
-                                    </Label>
-                                    <Select
-                                      value={editFiliere.niveau}
-                                      onValueChange={(value) => setEditFiliere({...editFiliere, niveau: value})}
-                                    >
-                                      <SelectTrigger className="col-span-3 w-full">
-                                        <SelectValue placeholder="Sélectionner un niveau" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="L3">Licence 3</SelectItem>
-                                        <SelectItem value="M2">Master 2</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                                <SheetFooter>
-                                  <Button type="submit">Enregistrer</Button>
-                                </SheetFooter>
-                              </form>
-                            </SheetContent>
-                          </Sheet>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 p-0"
-                            type="button"
-                            onClick={(e) => prepareDelete(filiere.id, e)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {currentItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8">
+                        Aucune filière trouvée
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    currentItems.map((filiere) => (
+                      <TableRow key={filiere.id}>
+                        <TableCell className="w-2/5">{filiere.code}</TableCell>
+                        <TableCell className="w-2/5">{filiere.libelle}</TableCell>
+                        <TableCell className="w-1/5">
+                          {filiere.niveau === "L3" ? "Licence 3" : "Master 2"}
+                        </TableCell>
+                        <TableCell className="w-1/5">
+                          <div className="flex gap-2">
+                            <Sheet open={isEditSheetOpen && editFiliere.id === filiere.id} onOpenChange={(open) => {
+                              if (!open) setEditFiliere({ id: null, code: "", libelle: "", niveau: "L3" });
+                              setIsEditSheetOpen(open);
+                            }}>
+                              <SheetTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 p-0"
+                                  type="button"
+                                  onClick={(e) => prepareEdit(filiere, e)}
+                                >
+                                  <Pencil className="h-4 w-4 text-blue-500" />
+                                </Button>
+                              </SheetTrigger>
+                              <SheetContent>
+                                <form onSubmit={handleEditFiliere}>
+                                  <SheetHeader className="border-b bg-muted">
+                                    <SheetTitle>Modifier la filière</SheetTitle>
+                                  </SheetHeader>
+                                  <div className="grid gap-6 p-4">
+                                    <div className="grid items-center gap-3">
+                                      <Label htmlFor="edit-code" className="text-right">
+                                        Code
+                                      </Label>
+                                      <Input
+                                        id="edit-code"
+                                        value={editFiliere.code}
+                                        onChange={(e) => setEditFiliere({...editFiliere, code: e.target.value})}
+                                        className="col-span-3"
+                                      />
+                                    </div>
+                                    <div className="grid items-center gap-3">
+                                      <Label htmlFor="edit-libelle" className="text-right">
+                                        Libellé
+                                      </Label>
+                                      <Input
+                                        id="edit-libelle"
+                                        value={editFiliere.libelle}
+                                        onChange={(e) => setEditFiliere({...editFiliere, libelle: e.target.value})}
+                                        className="col-span-3"
+                                      />
+                                    </div>
+                                    <div className="grid items-center gap-3">
+                                      <Label htmlFor="edit-niveau" className="text-right">
+                                        Niveau
+                                      </Label>
+                                      <Select
+                                        value={editFiliere.niveau}
+                                        onValueChange={(value) => setEditFiliere({...editFiliere, niveau: value})}
+                                      >
+                                        <SelectTrigger className="col-span-3 w-full">
+                                          <SelectValue placeholder="Sélectionner un niveau" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="L3">Licence 3</SelectItem>
+                                          <SelectItem value="M2">Master 2</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                  <SheetFooter>
+                                    <Button type="submit">Enregistrer</Button>
+                                  </SheetFooter>
+                                </form>
+                              </SheetContent>
+                            </Sheet>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 p-0"
+                              type="button"
+                              onClick={(e) => prepareDelete(filiere.id, e)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-4 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                        />
+                      </PaginationItem>
+                      
+                      {getPageNumbers().map((pageNumber, index) => (
+                        <PaginationItem key={index}>
+                          {pageNumber === '...' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => handlePageChange(pageNumber)}
+                              isActive={currentPage === pageNumber}
+                            >
+                              {pageNumber}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -8,6 +8,8 @@ import axios from "axios";
 import SoutenanceFilter from "./composants/SoutenanceFilter";
 import SoutenanceTable from "./composants/SoutenanceTable";
 import DeleteDialog from "./ComposantDialog/DeleteDialog";
+import ViewSoutenanceDialog from "./ComposantDialog/ViewSoutenanceDialog";
+import EditSoutenanceDialog from "./ComposantDialog/EditSoutenanceDialog";
 import {services} from '@/services/services'
 import { useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
@@ -24,6 +26,9 @@ export default function Index() {
   const [originalSoutenances, setOriginalSoutenances] = useState([]);
   const [deleteSoutenance , setDeleteSoutenance] = useState() ;
   const [isDeleteDialogOpen, setisDeleteDialogOpen] = useState(false);
+  const [selectedSoutenance, setSelectedSoutenance] = useState(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const navigate = useNavigate() ; 
 
   // Fonction pour exporter en Excel
@@ -125,17 +130,40 @@ export default function Index() {
     fetchEnseignants(); 
   }, []);
 
-  const enrichSoutenances = (soutenances, binomes, monomes , enseignant) => {
+  const enrichSoutenances = (soutenances, binomes, monomes, enseignants) => {
     return soutenances.map((soutenance) => {
-      const searchEnseignant = enseignant.find((e)=>e.id === soutenance?.monome || soutenance?.binome); 
+      let NomEnseignant = "";
+      let PrenomEnseignant = "";
+
+      // Pour un monome
       if (soutenance.monome) {
         const monomeData = monomes.find((m) => m.id === soutenance.monome);
-        return { ...soutenance, etudiants: [monomeData?.etudiant] , themeMemoire : monomeData.theme , NomEnseignant : searchEnseignant.nom  , PrenomEnseignant : searchEnseignant.prenom};
+        // On suppose que le directeur est dans soutenance.directeur_id
+        const searchEnseignant = enseignants.find((e) => e.id === soutenance.directeur_id);
+        NomEnseignant = searchEnseignant?.nom || "";
+        PrenomEnseignant = searchEnseignant?.prenom || "";
+        return {
+          ...soutenance,
+          etudiants: [monomeData?.etudiant].filter(Boolean),
+          themeMemoire: monomeData?.theme || "",
+          NomEnseignant,
+          PrenomEnseignant,
+        };
       }
 
+      // Pour un binome
       if (soutenance.binome) {
         const binomeData = binomes.find((b) => b.id === soutenance.binome);
-        return { ...soutenance, etudiants: binomeData?.etudiants || [] , themeMemoire : binomeData.theme , NomEnseignant : searchEnseignant.nom  , PrenomEnseignant : searchEnseignant.prenom};
+        const searchEnseignant = enseignants.find((e) => e.id === soutenance.directeur_id);
+        NomEnseignant = searchEnseignant?.nom || "";
+        PrenomEnseignant = searchEnseignant?.prenom || "";
+        return {
+          ...soutenance,
+          etudiants: binomeData?.etudiants || [],
+          themeMemoire: binomeData?.theme || "",
+          NomEnseignant,
+          PrenomEnseignant,
+        };
       }
 
       return soutenance;
@@ -231,7 +259,25 @@ export default function Index() {
 
   const filteredSoutenances = applyFilters(soutenances);
 
-  console.log("id" , soutenances);
+  console.log("soutenance" , soutenances);
+
+  const handleViewSoutenance = (soutenance) => {
+    setSelectedSoutenance(soutenance);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEditSoutenance = (soutenance) => {
+    setSelectedSoutenance(soutenance);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSuccess = async () => {
+    await fetchSoutenance();
+    toast.success("Succès", {
+      description: "Soutenance modifiée avec succès"
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Toaster richColors position="top-right" />
@@ -248,8 +294,9 @@ export default function Index() {
       />
       <SoutenanceTable 
         soutenances={filteredSoutenances} 
-        onEdit={(id) => console.log('Edit soutenance:', id)}
+        onEdit={handleEditSoutenance}
         onDelete={prepareDelete}
+        onView={handleViewSoutenance}
         tableRef={tableRef}
       />
       <DeleteDialog 
@@ -257,7 +304,17 @@ export default function Index() {
         onOpenChange = {setisDeleteDialogOpen}
         handleDelete = {handledetele}
       />
-      
+      <ViewSoutenanceDialog
+        open={isViewDialogOpen}
+        onOpenChange={setIsViewDialogOpen}
+        soutenance={selectedSoutenance}
+      />
+      <EditSoutenanceDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        soutenance={selectedSoutenance}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   )
 }

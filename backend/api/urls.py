@@ -5,6 +5,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+
 router = DefaultRouter()
 router.register(r'filieres', FiliereViewSet)
 router.register(r'enseignants', EnseignantViewSet)
@@ -23,7 +24,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     # Vous pouvez ajouter des URLs pour l'authentification
     path('api-auth/', include('rest_framework.urls')),
-    path('approuver/<int:user_id>/', approve_personnel, name='approve_personnel'),
+    path('api/approuver/<int:user_id>/', approve_personnel, name='approve_personnel'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('inscription/', register_user, name='register'),
     path('connexion/', login_user, name='register'),
@@ -39,4 +40,7 @@ urlpatterns = [
     path('api/evenements/<int:evenement_id>/candidats/<int:candidat_id>/transactions/<str:transaction_id>/', UpdateTransactionView.as_view(), name='update-transaction'),
     path('api/me/',get_current_user, name='current_user'),
     path('deconnexion/', logout_user, name='logout'),
+    path('api/users/add/', add_user, name='add_user'),
+    path('api/users/<int:user_id>/update/', update_user, name='update_user'),
+    path('api/users/<int:user_id>/delete/', delete_user, name='delete_user'),
 ]

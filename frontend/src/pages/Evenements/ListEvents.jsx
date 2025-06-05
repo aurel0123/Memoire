@@ -86,7 +86,7 @@ export default function ListEvents() {
   return (
     <section>
       <div className="mb-2 flex items-center justify-between space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Gestion des évènements</h1>
         <div className="flex items-center space-x-2">
           <Button asChild className={cn("rounded-xl cursor-pointer")} >
             <Link to="/dashboard/create-event">

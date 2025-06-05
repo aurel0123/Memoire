@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Calendar, Clock, Edit, Eye, Trash2 } from 'lucide-react'
+import { Calendar, Clock, Edit, Eye, Trash2, Pencil } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button'
 export default function SoutenanceTable({
   soutenances ,
   onEdit , 
-  onDelete , tableRef
+  onDelete ,
+  onView,
+  tableRef
 }) {
   const formatDate = (dateStr) => {
     return new Date(dateStr).toLocaleDateString('fr-FR');
@@ -152,18 +154,18 @@ export default function SoutenanceTable({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEdit(soutenance.id)}
+                          onClick={() => onView(soutenance)}
                           className="h-8 w-8 p-0 hover:bg-blue-100"
                         >
-                          <Edit className="h-4 w-4 text-blue-600" />
+                          <Eye className="h-4 w-4 text-blue-600" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => console.log('View details')}
+                          onClick={() => onEdit(soutenance)}
                           className="h-8 w-8 p-0 hover:bg-green-100"
                         >
-                          <Eye className="h-4 w-4 text-green-600" />
+                          <Pencil className="h-4 w-4 text-green-600" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -190,4 +192,6 @@ SoutenanceTable.propTypes = {
   soutenances: PropTypes.array.isRequired , 
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired , 
+  onView: PropTypes.func.isRequired,
+  tableRef: PropTypes.object
 }

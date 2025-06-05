@@ -68,7 +68,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         is_new = not self.pk
         # Sauvegarde initiale pour obtenir un ID
         super().save(*args, **kwargs)
-        # Si utilisateur est un personnel approuvé et n’a pas encore de mot de passe
+        # Si utilisateur est un personnel approuvé et n'a pas encore de mot de passe
         if self.type_user == self.Types.ORGANISATEUR and self.is_approved and not self.has_usable_password():
             password = self.generate_random_password()
             self.set_password(password)
@@ -404,7 +404,7 @@ class Soutenance(models.Model):
             return
             
         # Vérification via le modèle through
-        if self.rolejury_set.count() != 3:
+        if self.jury_membres.count() != 3:
             raise ValidationError("Le jury doit comporter exactement 3 membres")
         
         # Vérification maître de mémoire

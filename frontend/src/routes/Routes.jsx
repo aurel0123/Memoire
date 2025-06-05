@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import LandingPage from '@/pages/LandingPage'
 import Dashbord from '@/layouts/Dashbord'
 import Filiere from '@/pages/Filiere/filiere'
-import Enseignant from '@/pages/enseignant'
+import Enseignant from '@/pages/Enseignants/enseignant'
 import Etudiantlicence from '@/pages/Etudiants_filiere/etudiantsl'
 import ListeEtu from '@/pages/listeetu'
 import FilieresList from "@/pages/FilieresList"

@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import permission_classes, api_view , action , authentication_classes
 import json
 from rest_framework_simplejwt import tokens
-from rest_framework.permissions import AllowAny , IsAuthenticatedOrReadOnly , IsAuthenticated
+from rest_framework.permissions import AllowAny , IsAuthenticatedOrReadOnly , IsAuthenticated , IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken , AccessToken
 from rest_framework.exceptions import AuthenticationFailed , PermissionDenied
 from django.utils import timezone
@@ -352,6 +352,52 @@ def approve_personnel(request, user_id):
     
     # Retourner une erreur si la méthode n'est pas POST
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def add_user(request):
+    serializer = CustomUserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save(is_approved=True)
+        return Response(CustomUserSerializer(user).data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def update_user(request, user_id):
+    try:
+        user = CustomUser.objects.get(pk=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Utilisateur non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    serializer = CustomUserSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        user = serializer.save()
+        return Response(CustomUserSerializer(user).data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_user(request, user_id):
+    try:
+        user = CustomUser.objects.get(pk=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Utilisateur non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    user.delete()
+    return Response({'success': 'Utilisateur supprimé'}, status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def approve_user(request, user_id):
+    try:
+        user = CustomUser.objects.get(pk=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Utilisateur non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+    user.is_approved = True
+    user.save()
+    return Response({'success': 'Utilisateur approuvé'}, status=status.HTTP_200_OK)
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

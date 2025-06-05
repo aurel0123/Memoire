@@ -215,7 +215,7 @@ export const AuthProvider = ({ children }) => {
             return { success: true }
         } catch (error) {
             console.error('Erreur de connexion:', error)
-            const message = error.response?.data?.detail || error.message || 'Erreur de connexion'
+            const message = error.response?.data?.error || error.message || 'Erreur de connexion'
             setError(message)
             return { success: false, error: message }
         }
