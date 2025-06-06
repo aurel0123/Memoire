@@ -86,14 +86,14 @@ const juryParticipationData = [
       </div>
 
       {/* Contenu Principal */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mt-6">
+      {/* <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 mt-6">
         <div className="lg:col-span-2">
           <UpcomingDefenses />
         </div>
         <div>
           <DefenseCalendar />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

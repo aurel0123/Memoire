@@ -140,11 +140,6 @@ const menuConfig = {
         isActive: true,
       },
       {
-        title: "Attribution Salle",
-        url: "planificationSalle",
-        icon: CalendarFold,
-      },
-      {
         title: "Filières",
         url: "filiere",
         icon: User,
@@ -250,6 +245,11 @@ const menuConfig = {
         url: "soutenance",
         icon: BookMarked,
         isActive: false,
+      },
+      {
+        title: "Attribution Salle",
+        url: "planificationSalle",
+        icon: CalendarFold,
       },
     ],
     navEvents: [],
